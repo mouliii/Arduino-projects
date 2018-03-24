@@ -10,18 +10,17 @@
 #define CE_PIN   9
 #define CSN_PIN 10
 
-const byte slaveAddress[5] = { 'R','x','A','A','A' };
+const byte slaveAddress = 76;
 
 
 RF24 radio(CE_PIN, CSN_PIN); // Create a Radio
 
-char dataToSend[10] = "Message 0";
-char txNum = '0';
+int potValue = 0;
 
 
 unsigned long currentMillis;
 unsigned long prevMillis;
-unsigned long txIntervalMillis = 1000; // send once per second
+unsigned long txIntervalMillis = 4; // send once per second
 
 
 void setup() {
@@ -43,6 +42,7 @@ void setup() {
 void loop() {
 	currentMillis = millis();
 	if (currentMillis - prevMillis >= txIntervalMillis) {
+		potValue = analogRead(A0);
 		send();
 		prevMillis = millis();
 	}
@@ -52,24 +52,10 @@ void loop() {
 
 void send() {
 
-	radio.write(&dataToSend, sizeof(dataToSend));
+	radio.write(&potValue, sizeof(potValue));
 	// Always use sizeof() as it gives the size as the number of bytes.
 	// For example if dataToSend was an int sizeof() would correctly return 2
+	Serial.print("Pot Value ");
+	Serial.println(potValue);
 
-	Serial.print("Data Sent ");
-	Serial.println(dataToSend);
-	updateMessage();
-	
 }
-
-//================
-
-void updateMessage() {
-	// so you can see that new data is being sent
-	txNum += 1;
-	if (txNum > '9') {
-		txNum = '0';
-	}
-	dataToSend[8] = txNum;
-}
-

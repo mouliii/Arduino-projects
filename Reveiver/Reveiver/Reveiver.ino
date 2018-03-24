@@ -9,11 +9,11 @@
 #define CE_PIN   9
 #define CSN_PIN 10
 
-const byte thisSlaveAddress[5] = { 'R','x','A','A','A' };
+const byte thisSlaveAddress = 76;
 
 RF24 radio(CE_PIN, CSN_PIN);
 
-char dataReceived[10]; // this must match dataToSend in the TX
+int potValue = 0; // this must match dataToSend in the TX
 bool newData = false;
 
 //===========
@@ -25,6 +25,7 @@ void setup() {
 	Serial.println("SimpleRx Starting");
 	radio.begin();
 	radio.setDataRate(RF24_250KBPS);
+	//radio.setPALevel(RF24_PA_MIN);
 	radio.setAutoAck(false);
 	radio.openReadingPipe(1, thisSlaveAddress);
 	radio.startListening();
@@ -41,7 +42,7 @@ void loop() {
 
 void getData() {
 	if (radio.available()) {
-		radio.read(&dataReceived, sizeof(dataReceived));
+		radio.read(&potValue, sizeof(potValue));
 		newData = true;
 	}
 }
@@ -49,7 +50,7 @@ void getData() {
 void showData() {
 	if (newData == true) {
 		Serial.print("Data received ");
-		Serial.println(dataReceived);
+		Serial.println(potValue);
 		newData = false;
 	}
 }
