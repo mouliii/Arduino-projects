@@ -15,8 +15,17 @@ const byte thisSlaveAddress = 76;
 RF24 radio(CE_PIN, CSN_PIN);
 Servo esc;
 
-int potValue = 0; // this must match dataToSend in the TX
 bool newData = false;
+
+struct Input
+{
+	int thrust = 0;
+	int pitch = 0;
+	int roll = 0;
+	int yaw = 0;
+};
+
+Input inputs;
 
 //===========
 
@@ -46,9 +55,11 @@ void loop() {
 
 void getData() {
 	if (radio.available()) {
-		radio.read(&potValue, sizeof(potValue));
-		potValue = map(potValue, 0, 1023, 0, 255);
+		radio.read(&inputs, sizeof(inputs));
+		// TODO
+		//potValue = map(potValue, 0, 1023, 0, 255);
 		//esc.write(potValue);
+		
 		newData = true;
 	}
 }
@@ -56,7 +67,7 @@ void getData() {
 void showData() {
 	if (newData == true) {
 		Serial.print("Data received ");
-		Serial.println(potValue);
+		Serial.println(); // TODO
 		newData = false;
 	}
 }
