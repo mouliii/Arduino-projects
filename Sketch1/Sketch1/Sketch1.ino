@@ -15,12 +15,19 @@ const byte slaveAddress = 76;
 
 RF24 radio(CE_PIN, CSN_PIN); // Create a Radio
 
-int potValue = 0;
-
-
 unsigned long currentMillis;
 unsigned long prevMillis;
 unsigned long txIntervalMillis = 4; // send once per second
+
+struct Input
+{
+	int thrust = 0;
+	int pitch = 0;
+	int roll = 0;
+	int yaw = 0;
+};
+
+Input inputs;
 
 
 void setup() {
@@ -42,7 +49,9 @@ void setup() {
 void loop() {
 	currentMillis = millis();
 	if (currentMillis - prevMillis >= txIntervalMillis) {
-		potValue = analogRead(A0);
+		inputs.thrust = analogRead(A0);
+		inputs.pitch = analogRead(A1);
+		inputs.roll = analogRead(A2);
 		send();
 		prevMillis = millis();
 	}
@@ -52,10 +61,14 @@ void loop() {
 
 void send() {
 
-	radio.write(&potValue, sizeof(potValue));
+	radio.write(&inputs, sizeof(inputs));
 	// Always use sizeof() as it gives the size as the number of bytes.
 	// For example if dataToSend was an int sizeof() would correctly return 2
-	Serial.print("Pot Value ");
-	Serial.println(potValue);
+	Serial.print("thrust ");
+	Serial.println(inputs.thrust);
+	Serial.print("roll ");
+	Serial.println(inputs.roll);
+	Serial.print("pitch ");
+	Serial.println(inputs.pitch);
 
 }

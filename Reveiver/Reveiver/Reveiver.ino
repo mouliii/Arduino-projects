@@ -32,7 +32,7 @@ void setup() {
 	radio.openReadingPipe(1, thisSlaveAddress);
 	radio.startListening();
 	// esc
-	esc.attach(2);
+	//esc.attach(2);
 }
 
 //=============
@@ -48,7 +48,7 @@ void getData() {
 	if (radio.available()) {
 		radio.read(&potValue, sizeof(potValue));
 		potValue = map(potValue, 0, 1023, 0, 255);
-		esc.write(potValue);
+		//esc.write(potValue);
 		newData = true;
 	}
 }
