@@ -15,7 +15,7 @@ const byte thisSlaveAddress = 76;
 RF24 radio(CE_PIN, CSN_PIN);
 Servo esc;
 
-bool newData = false;
+bool newData = false; // <- debug
 
 struct Input
 {
@@ -48,7 +48,7 @@ void setup() {
 
 void loop() {
 	getData();
-	showData();
+	showData(); // <- debug
 }
 
 //==============
@@ -56,11 +56,16 @@ void loop() {
 void getData() {
 	if (radio.available()) {
 		radio.read(&inputs, sizeof(inputs));
-		// TODO
+		// TODO // 1023 / 2 == 511,5 -> 512 middle
+		// roll - 521 center value
+		// pitch - 525 center value
+		inputs.roll -= (9 - 512);
+		inputs.pitch -= (13 - 512); /*TEST*/
+
 		//potValue = map(potValue, 0, 1023, 0, 255);
 		//esc.write(potValue);
 		
-		newData = true;
+		newData = true; // <- debug
 	}
 }
 
