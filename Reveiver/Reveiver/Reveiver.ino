@@ -62,6 +62,7 @@ void getData() {
 		radio.read(&inputs, sizeof(inputs));
 		// joystick raw input zeroed //
 		inputs.roll -= 522;
+		inputs.roll *= -1;
 		inputs.pitch -= 525;
 		// mapping
 		inputs.roll = map(inputs.roll, -522, 501, -20, 20);
