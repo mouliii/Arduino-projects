@@ -1,5 +1,3 @@
-
-
 // SimpleRx - the slave or the receiver
 
 #include <Servo.h>
@@ -65,14 +63,14 @@ void getData() {
 		// joystick raw input zeroed //
 		inputs.roll -= 522;
 		inputs.pitch -= 525;
-		///////////////////////////////
+		// mapping
 		inputs.roll = map(inputs.roll, -522, 501, -20, 20);
 		inputs.pitch = map(inputs.pitch, -525, 498, -20, 20);
 		inputs.thrust = map(inputs.thrust, 0, 1023, 0, 255);
-		
+		// half values
 		byte rollHalf = inputs.roll / 2;
 		byte pitchHalf = inputs.pitch / 2;
-
+		// calculate and write motors true values
 		esc1.write(inputs.thrust + rollHalf + pitchHalf);
 		esc2.write(inputs.thrust - rollHalf + pitchHalf);
 		esc3.write(inputs.thrust + rollHalf - pitchHalf);
