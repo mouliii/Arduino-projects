@@ -67,7 +67,7 @@ void getData() {
 		// mapping
 		inputs.roll = map(inputs.roll, -522, 501, -20, 20);
 		inputs.pitch = map(inputs.pitch, -525, 498, -20, 20);
-		inputs.thrust = map(inputs.thrust, 0, 1023, 0, 255);
+		inputs.thrust = map(inputs.thrust, 0, 1023, 0, 179);   /// <<<<<<<<<<<<<<<<<<<<<<<<<<<<<< ///
 		// half values
 		byte rollHalf = inputs.roll / 2;
 		byte pitchHalf = inputs.pitch / 2;
