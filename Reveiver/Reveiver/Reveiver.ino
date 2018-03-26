@@ -13,7 +13,10 @@
 const byte thisSlaveAddress = 76;
 
 RF24 radio(CE_PIN, CSN_PIN);
-Servo esc;
+Servo esc1;
+Servo esc2;
+Servo esc3;
+Servo esc4;
 
 bool newData = false; // <- debug
 
@@ -41,7 +44,10 @@ void setup() {
 	radio.openReadingPipe(1, thisSlaveAddress);
 	radio.startListening();
 	// esc
-	//esc.attach(2);
+	esc1.attach(2);
+	esc2.attach(3);
+	esc3.attach(4);
+	esc4.attach(5);
 }
 
 //=============
@@ -56,14 +62,21 @@ void loop() {
 void getData() {
 	if (radio.available()) {
 		radio.read(&inputs, sizeof(inputs));
-		// TODO // 1023 / 2 == 511,5 -> 512 middle
-		// roll - 521 center value
-		// pitch - 525 center value
-		inputs.roll -= (9 - 512);
-		inputs.pitch -= (13 - 512); /*TEST*/
+		// joystick raw input zeroed //
+		inputs.roll -= 522;
+		inputs.pitch -= 525;
+		///////////////////////////////
+		inputs.roll = map(inputs.roll, -522, 501, -20, 20);
+		inputs.pitch = map(inputs.pitch, -525, 498, -20, 20);
+		inputs.thrust = map(inputs.thrust, 0, 1023, 0, 255);
+		
+		byte rollHalf = inputs.roll / 2;
+		byte pitchHalf = inputs.pitch / 2;
 
-		//potValue = map(potValue, 0, 1023, 0, 255);
-		//esc.write(potValue);
+		esc1.write(inputs.thrust + rollHalf + pitchHalf);
+		esc2.write(inputs.thrust - rollHalf + pitchHalf);
+		esc3.write(inputs.thrust + rollHalf - pitchHalf);
+		esc4.write(inputs.thrust - rollHalf - pitchHalf);
 		
 		newData = true; // <- debug
 	}
