@@ -59,11 +59,4 @@ void send() {
 	radio.write(&inputs, sizeof(inputs));
 	// Always use sizeof() as it gives the size as the number of bytes.
 	// For example if dataToSend was an int sizeof() would correctly return 2
-	Serial.print("thrust ");
-	Serial.println(inputs.thrust);
-	Serial.print("roll ");
-	Serial.println(inputs.roll);
-	Serial.print("pitch ");
-	Serial.println(inputs.pitch);
-
 }
