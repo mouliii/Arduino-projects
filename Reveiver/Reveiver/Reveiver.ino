@@ -68,15 +68,30 @@ void getData() {
 		// mapping
 		inputs.roll = map(inputs.roll, -522, 501, -maxAngle, maxAngle);
 		inputs.pitch = map(inputs.pitch, -525, 498, -maxAngle, maxAngle);
-		inputs.thrust = map(inputs.thrust, 0, 1023, 0, 179);   /// <<<<<<<<<<<<<<<<<<<<<<<<<<<<<< ///
+		//inputs.thrust = map(inputs.thrust, 0, 1000, 0, 179);   /// <<<<<<<<<<<<<<<<<<<<<<<<<<<<<< ///
 		// half values
-		byte rollHalf = inputs.roll / 2;
-		byte pitchHalf = inputs.pitch / 2;
+		int rollHalf = inputs.roll / 2;
+		int pitchHalf = inputs.pitch / 2;
+
+		Serial.println(rollHalf);
+		Serial.println(pitchHalf);
+
 		// calculate and write motors true values
-		esc1.write(inputs.thrust + rollHalf + pitchHalf);
-		esc2.write(inputs.thrust - rollHalf + pitchHalf);
-		esc3.write(inputs.thrust + rollHalf - pitchHalf);
-		esc4.write(inputs.thrust - rollHalf - pitchHalf);
+		if (inputs.thrust + 1000 > 1940)
+		{
+			inputs.thrust = 850;
+		}
+		esc1.writeMicroseconds(inputs.thrust + 1000 + rollHalf + pitchHalf);
+		//Serial.print("m1: ");  Serial.println(inputs.thrust + 1000 + rollHalf + pitchHalf);
+
+		esc2.writeMicroseconds(inputs.thrust + 1000 - rollHalf + pitchHalf);
+		//Serial.print("m2: ");  Serial.println(inputs.thrust + 1000 - rollHalf + pitchHalf);
+
+		esc3.writeMicroseconds(inputs.thrust + 1000 + rollHalf - pitchHalf);
+		//Serial.print("m3: ");  Serial.println(inputs.thrust + 1000 + rollHalf - pitchHalf);
+
+		esc4.writeMicroseconds(inputs.thrust + 1000 - rollHalf - pitchHalf);
+		//Serial.print("m4: ");  Serial.println(inputs.thrust + 1000 - rollHalf - pitchHalf);
 		
 		newData = true; // <- debug
 	}
@@ -84,8 +99,7 @@ void getData() {
 
 void showData() {
 	if (newData == true) {
-		Serial.print("Data received ");
-		Serial.println(); // TODO
+		Serial.println(inputs.thrust + 1000); // TODO
 		newData = false;
 	}
 }
