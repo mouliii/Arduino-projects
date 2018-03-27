@@ -9,6 +9,7 @@
 #define CSN_PIN 10
 
 const byte thisSlaveAddress = 76;
+const byte maxAngle = 20;
 
 RF24 radio(CE_PIN, CSN_PIN);
 Servo esc1;
@@ -65,8 +66,8 @@ void getData() {
 		inputs.roll *= -1;
 		inputs.pitch -= 525;
 		// mapping
-		inputs.roll = map(inputs.roll, -522, 501, -20, 20);
-		inputs.pitch = map(inputs.pitch, -525, 498, -20, 20);
+		inputs.roll = map(inputs.roll, -522, 501, -maxAngle, maxAngle);
+		inputs.pitch = map(inputs.pitch, -525, 498, -maxAngle, maxAngle);
 		inputs.thrust = map(inputs.thrust, 0, 1023, 0, 179);   /// <<<<<<<<<<<<<<<<<<<<<<<<<<<<<< ///
 		// half values
 		byte rollHalf = inputs.roll / 2;
