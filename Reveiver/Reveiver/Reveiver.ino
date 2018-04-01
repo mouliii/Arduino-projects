@@ -78,7 +78,7 @@ void setup() {
 //=============
 
 void loop() {
-	GetData();
+	GetTransmitterData();
 	GetGyroData();
 	CalculatePID();
 	WriteToMotors();
@@ -96,7 +96,7 @@ void loop() {
 
 //==============
 
-void GetData() {
+void GetTransmitterData() {
 	if (radio.available()) {
 		radio.read(&inputs, sizeof(inputs));
 		// joystick raw input zeroed //
@@ -181,7 +181,7 @@ void CalculatePID()
 
 void WriteToMotors()
 {
-
+	//esc1.writeMicroseconds();
 }
 
 
