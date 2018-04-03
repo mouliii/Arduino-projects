@@ -1,7 +1,6 @@
 // TODO SHITTII TAI MUISTUTKSIA
 // 
 // TODO YAW PID
-// MOOTTORI()
 // BATTERY COMPENSATION
 ///////////////////////////////////////////////
 
@@ -15,7 +14,7 @@
 #define CE_PIN   9
 #define CSN_PIN 10
 
-const byte thisSlaveAddress = 76;
+const byte radioAddress = 76;
 const char maxAngle = 20;
 
 RF24 radio(CE_PIN, CSN_PIN);
@@ -63,7 +62,7 @@ void setup() {
 	radio.setDataRate(RF24_250KBPS);
 	//radio.setPALevel(RF24_PA_MIN);
 	radio.setAutoAck(false);
-	radio.openReadingPipe(1, thisSlaveAddress);
+	radio.openReadingPipe(1, radioAddress);
 	radio.startListening();
 	// esc
 	esc1.attach(2); // top left
@@ -75,11 +74,9 @@ void setup() {
 	loop_timer = micros();
 }
 
-//=============
-
 void loop() {
 	GetTransmitterData();
-	GetGyroData();
+	gyro.read_mpu_6050_data();
 	CalculatePID();
 	WriteToMotors();
 	showData(); // <- debug
@@ -94,8 +91,6 @@ void loop() {
 	}
 }
 
-//==============
-
 void GetTransmitterData() {
 	if (radio.available()) {
 		radio.read(&inputs, sizeof(inputs));
@@ -109,11 +104,6 @@ void GetTransmitterData() {
 
 		newData = true; // <- debug
 	}
-}
-
-void GetGyroData()
-{
-	gyro.read_mpu_6050_data();
 }
 
 void CalculatePID()
@@ -181,13 +171,15 @@ void CalculatePID()
 
 void WriteToMotors()
 {
-	//esc1.writeMicroseconds();
+	esc1.write(inputs.thrust + pid_roll + pid_pitch - pid_yaw );
+	esc2.write(inputs.thrust - pid_roll + pid_pitch + pid_yaw );
+	esc3.write(inputs.thrust + pid_roll - pid_pitch + pid_yaw );
+	esc4.write(inputs.thrust - pid_roll - pid_pitch - pid_yaw );
 }
-
 
 void showData() {
 	if (newData == true) {
-		Serial.println(inputs.thrust + 1000); // TODO
+		Serial.println(inputs.thrust + 1000); // debug
 		newData = false;
 	}
 }
