@@ -2,7 +2,7 @@
 // 
 // TODO YAW PID
 // MOOTTORI()
-// 
+// BATTERY COMPENSATION
 ///////////////////////////////////////////////
 
 
@@ -90,7 +90,7 @@ void loop() {
 
 	while (micros() - loop_timer < 4000);                                //Wait until the loop_timer reaches 4000us (250Hz) before starting the next loop
 	{
-		loop_timer = micros();                                               //Reset the loop timer
+		loop_timer = micros();                                           //Reset the loop timer
 	}
 }
 

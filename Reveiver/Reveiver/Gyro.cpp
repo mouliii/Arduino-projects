@@ -84,8 +84,8 @@ void Gyro::read_mpu_6050_data()
 	angle_roll_acc -= 0.0;         //<----------                         //Accelerometer calibration value for roll
 
 	if (set_gyro_angles) {                                               //If the IMU is already started
-		angle_pitch = angle_pitch * 0.9996 + angle_pitch_acc * 0.0004;     //Correct the drift of the gyro pitch angle with the accelerometer pitch angle
-		angle_roll = angle_roll * 0.9996 + angle_roll_acc * 0.0004;        //Correct the drift of the gyro roll angle with the accelerometer roll angle
+		angle_pitch = angle_pitch * 0.98 + angle_pitch_acc * 0.02;     //Correct the drift of the gyro pitch angle with the accelerometer pitch angle
+		angle_roll = angle_roll * 0.98 + angle_roll_acc * 0.02;        //Correct the drift of the gyro roll angle with the accelerometer roll angle
 	}
 	else {                                                               //At first start
 		angle_pitch = angle_pitch_acc;                                     //Set the gyro pitch angle equal to the accelerometer pitch angle
