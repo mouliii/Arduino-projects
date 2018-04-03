@@ -1,4 +1,4 @@
-// TODO SHITTII TAI MUISTUTKSIA
+// TODO TAI MUISTUTKSIA
 // 
 // TODO YAW PID
 // BATTERY COMPENSATION
@@ -23,7 +23,6 @@ Servo esc2;
 Servo esc3;
 Servo esc4;
 Gyro gyro;
-bool newData = false; // <- debug
 
 struct Input
 {
@@ -36,9 +35,9 @@ Input inputs;
 
 long loop_timer;
 //////////////// PID CONSTANTS ////////////////
-const float kp = 0.0f;
-const float ki = 0.0f;
-const float kd = 0.0f;
+const float kp = 3.15f;
+const float ki = 0.02f;
+const float kd = 0.15f;
 //////////////// //////////// ////////////////
 float pid_p = 0.0f;
 float pid_i = 0.0f;
@@ -56,6 +55,7 @@ void setup() {
 	// gyro
 	Wire.begin();
 	gyro.setup_mpu_6050_registers();
+	gyro.Init();
 	// radio
 	Serial.println("SimpleRx Starting");
 	radio.begin();
@@ -80,13 +80,15 @@ void loop() {
 	CalculatePID();
 	WriteToMotors();
 	showData(); // <- debug
+	
 	if (micros() - loop_timer > 4000)
 	{
 		Serial.println("loop timer too high!!!!");
 	}
-
+	
 	while (micros() - loop_timer < 4000);                                //Wait until the loop_timer reaches 4000us (250Hz) before starting the next loop
 	{
+		gyro.read_mpu_6050_data();
 		loop_timer = micros();                                           //Reset the loop timer
 	}
 }
@@ -101,8 +103,6 @@ void GetTransmitterData() {
 		// mapping
 		inputs.roll = map(inputs.roll, -522, 501, -maxAngle, maxAngle);
 		inputs.pitch = map(inputs.pitch, -525, 498, -maxAngle, maxAngle);
-
-		newData = true; // <- debug
 	}
 }
 
@@ -177,9 +177,10 @@ void WriteToMotors()
 	esc4.write(inputs.thrust - pid_roll - pid_pitch - pid_yaw );
 }
 
-void showData() {
-	if (newData == true) {
-		Serial.println(inputs.thrust + 1000); // debug
-		newData = false;
-	}
+void showData()
+{
+	//debug only
+	Serial.println(pid_roll);
+	Serial.println(pid_pitch);
+	Serial.println("=========");
 }

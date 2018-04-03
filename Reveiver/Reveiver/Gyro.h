@@ -25,6 +25,7 @@ class Gyro
 		 return angle_roll;
 	 }
 private:
+	float angle_roll_acc, angle_pitch_acc;
 	int gyro_x, gyro_y, gyro_z;
 	long acc_x, acc_y, acc_z, acc_total_vector;
 	int temperature;
@@ -32,7 +33,6 @@ private:
 	int lcd_loop_counter;
 	float angle_pitch, angle_roll;
 	int angle_pitch_buffer, angle_roll_buffer;
-	float angle_roll_acc, angle_pitch_acc;
 	float angle_pitch_output, angle_roll_output;
 	bool set_gyro_angles = false;
 };
