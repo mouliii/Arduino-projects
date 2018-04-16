@@ -1,14 +1,8 @@
 // SimpleTx - the master or the transmitter
 #include <SPI.h>
-#include <nRF24L01.h>
-#include <RF24.h>
+#include <VirtualWire/VirtualWire.h>
 
-#define CE_PIN   9
-#define CSN_PIN 10
 
-const byte slaveAddress = 76;
-
-RF24 radio(CE_PIN, CSN_PIN); // Create a Radio
 
 unsigned long currentMillis;
 unsigned long prevMillis;
@@ -31,12 +25,9 @@ void setup() {
 
 	Serial.println("SimpleTx Starting");
 
-	radio.begin();
-	radio.setDataRate(RF24_250KBPS);
-	radio.setRetries(3, 5); // delay, count
-	radio.setAutoAck(false);
-	radio.setPALevel(RF24_PA_MAX);
-	radio.openWritingPipe(slaveAddress);
+	vw_set_tx_pin(7);
+	vw_setup(2000);
+	vw_set_ptt_inverted(true);
 }
 
 //====================
@@ -45,8 +36,8 @@ void loop() {
 	currentMillis = millis();
 	if (currentMillis - prevMillis >= txIntervalMillis) {
 		inputs.thrust = analogRead(A0);
-		inputs.pitch = analogRead(A1);
-		inputs.roll = analogRead(A2);
+		inputs.pitch = analogRead(A4);
+		inputs.roll = analogRead(A6);
 		send();
 		prevMillis = millis();
 	}
@@ -56,9 +47,6 @@ void loop() {
 
 void send() {
 
-	radio.write(&inputs, sizeof(inputs));
-	// Always use sizeof() as it gives the size as the number of bytes.
-	// For example if dataToSend was an int sizeof() would correctly return 2
-	Serial.println(inputs.pitch);
-	Serial.println(inputs.roll);
+	vw_send((uint8_t*)&inputs, sizeof(inputs));
+	Serial.println(inputs.thrust);
 }
