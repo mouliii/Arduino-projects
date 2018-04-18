@@ -37,5 +37,10 @@ private:
 	bool set_gyro_angles = false;
 };
 
+//////////////////////////////////////
+// !!!!! !!!!!!! !!!!! !!!!! !!!!! !!!!!
+//  angleRoll() JA anglePitch() ON INVERTOITU
+///////////////////////////////////////
+
 #endif
 

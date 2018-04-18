@@ -1,6 +1,6 @@
 // TODO TAI MUISTUTKSIA
 // 
-// TODO YAW PID
+// input säätö
 // BATTERY COMPENSATION
 ///////////////////////////////////////////////
 
@@ -42,8 +42,9 @@ const float kd = 0.15f;
 float pid_p = 0.0f;
 float pid_i = 0.0f;
 float pid_d = 0.0f;
-float error = 0.0f; 
-float prevError = 0.0f;
+float prevErrorRoll = 0.0f;
+float prevErrorPitch = 0.0f;
+float error = 0.0f;
 float pid_roll = 0.0f;
 float pid_pitch = 0.0f;
 float pid_yaw = 0.0f;
@@ -52,6 +53,7 @@ float pid_yaw = 0.0f;
 void setup() {
 
 	Serial.begin(9600);
+	pinMode(7, OUTPUT);
 	// gyro
 	Wire.begin();
 	gyro.setup_mpu_6050_registers();
@@ -79,16 +81,21 @@ void loop() {
 	gyro.read_mpu_6050_data();
 	CalculatePID();
 	WriteToMotors();
-	showData(); // <- debug
+	//showData(); // <- debug
 	
 	if (micros() - loop_timer > 4000)
 	{
-		Serial.println("loop timer too high!!!!");
+		digitalWrite(7, HIGH);
+		loop_timer = micros();
+	}
+	else
+	{
+		digitalWrite(7, LOW);
+		loop_timer = micros();
 	}
 	
 	while (micros() - loop_timer < 4000);                                //Wait until the loop_timer reaches 4000us (250Hz) before starting the next loop
 	{
-		gyro.read_mpu_6050_data();
 		loop_timer = micros();                                           //Reset the loop timer
 	}
 }
@@ -109,7 +116,7 @@ void GetTransmitterData() {
 void CalculatePID()
 {
 	// ROLL ///////////////////////////////
-	error = gyro.angleRoll() - inputs.roll;
+	error = gyro.anglePitch() - inputs.roll; // anglePitch() ON OIKEASTI angleRoll() !!!!!!!!!!!!!!!!!!!
 	// kp
 	pid_p = kp * error;
 	// ki and limit checks
@@ -123,7 +130,7 @@ void CalculatePID()
 		pid_i = -maxAngle;
 	}
 	// kd
-	pid_d = kd * (error - prevError);
+	pid_d = kd * (error - prevErrorRoll);
 	// total roll pid
 	pid_roll = pid_p + pid_i + pid_d;
 	// total limit check
@@ -135,9 +142,9 @@ void CalculatePID()
 	{
 		pid_roll = -maxAngle;
 	}
-
+	prevErrorRoll = error;
 	// PITCH  ///////////////////////////////
-	error = gyro.anglePitch() - inputs.pitch;
+	error = gyro.angleRoll() - inputs.pitch; // angleRoll() ON OIKEASTI anglePitch() !!!!!!!!!!!!!!!!!!!
 	// kp
 	pid_p = kp * error;
 	// ki and limit checks
@@ -151,7 +158,7 @@ void CalculatePID()
 		pid_i = -maxAngle;
 	}
 	// kd
-	pid_d = kd * (error - prevError);
+	pid_d = kd * (error - prevErrorPitch);
 	// total roll pid
 	pid_pitch = pid_p + pid_i + pid_d;
 	// total limit check
@@ -163,24 +170,29 @@ void CalculatePID()
 	{
 		pid_pitch = -maxAngle;
 	}
+	prevErrorPitch = error;
 	// YAW  /////////////////////////////////
+	inputs.yaw *= maxAngle;
 
-	// TODO
-	prevError = error;
+
 }
 
 void WriteToMotors()
 {
-	esc1.write(inputs.thrust + pid_roll + pid_pitch - pid_yaw );
-	esc2.write(inputs.thrust - pid_roll + pid_pitch + pid_yaw );
-	esc3.write(inputs.thrust + pid_roll - pid_pitch + pid_yaw );
-	esc4.write(inputs.thrust - pid_roll - pid_pitch - pid_yaw );
+	esc1.writeMicroseconds(inputs.thrust + pid_roll + pid_pitch - pid_yaw );
+	esc2.writeMicroseconds(inputs.thrust - pid_roll + pid_pitch + pid_yaw );
+	esc3.writeMicroseconds(inputs.thrust + pid_roll - pid_pitch + pid_yaw );
+	esc4.writeMicroseconds(inputs.thrust - pid_roll - pid_pitch - pid_yaw );
 }
 
 void showData()
 {
 	//debug only
-	Serial.println(pid_roll);
-	Serial.println(pid_pitch);
-	Serial.println("=========");
+	//Serial.println(pid_roll);
+	//Serial.println(pid_pitch);
+	//Serial.println("=========");
 }
+
+/*
+PITCH JA ROLL VÄÄRINPÄIN
+*/
