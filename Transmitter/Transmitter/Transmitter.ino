@@ -56,7 +56,10 @@ void loop() {
 		{
 			inputs.yaw = -1;
 		}
-
+		else
+		{
+			inputs.yaw = 0;
+		}
 		send();
 		prevMillis = millis();
 	}
