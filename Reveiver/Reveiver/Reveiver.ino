@@ -1,6 +1,6 @@
 // TODO TAI MUISTUTKSIA
 // 
-// input säätö
+// 
 // BATTERY COMPENSATION
 ///////////////////////////////////////////////
 
@@ -30,14 +30,15 @@ struct Input
 	int pitch = 0;
 	int roll = 0;
 	int yaw = 0;
+	bool STOP = false;
 };
 Input inputs;
 
 long loop_timer;
 //////////////// PID CONSTANTS ////////////////
-const float kp = 3.15f;
-const float ki = 0.02f;
-const float kd = 0.15f;
+const float kp = 0.0f;
+const float ki = 0.0f;
+const float kd = 15.0f;
 //////////////// //////////// ////////////////
 float pid_p = 0.0f;
 float pid_i = 0.0f;
@@ -71,32 +72,42 @@ void setup() {
 	esc2.attach(3); // top right
 	esc3.attach(4); // bottom left
 	esc4.attach(5); // bottom right
+	esc1.writeMicroseconds(1000);
+	esc2.writeMicroseconds(1000);
+	esc3.writeMicroseconds(1000);
+	esc4.writeMicroseconds(1000);
 
 	//Reset the loop timer
 	loop_timer = micros();
 }
 
 void loop() {
-	GetTransmitterData();
-	gyro.read_mpu_6050_data();
-	CalculatePID();
-	WriteToMotors();
-	//showData(); // <- debug
-	
-	if (micros() - loop_timer > 4000)
+	if (!inputs.STOP)
 	{
-		digitalWrite(7, HIGH);
-		loop_timer = micros();
+		GetTransmitterData();
+		gyro.read_mpu_6050_data();
+		CalculatePID();
+		WriteToMotors();
+		//showData(); // <- debug
+
+		if (micros() - loop_timer > 4000)
+		{
+			digitalWrite(7, HIGH);
+			loop_timer = micros();
+		}
+		else
+		{
+			digitalWrite(7, LOW);
+		}
+
+		while (micros() - loop_timer < 4000);                                //Wait until the loop_timer reaches 4000us (250Hz) before starting the next loop
+		{
+			loop_timer = micros();                                           //Reset the loop timer
+		}
 	}
 	else
 	{
-		digitalWrite(7, LOW);
-		loop_timer = micros();
-	}
-	
-	while (micros() - loop_timer < 4000);                                //Wait until the loop_timer reaches 4000us (250Hz) before starting the next loop
-	{
-		loop_timer = micros();                                           //Reset the loop timer
+		inputs.thrust = 1000;
 	}
 }
 
@@ -104,12 +115,23 @@ void GetTransmitterData() {
 	if (radio.available()) {
 		radio.read(&inputs, sizeof(inputs));
 		// joystick raw input zeroed //
-		inputs.roll -= 522;
+		inputs.roll -= 527; //522
 		inputs.roll *= -1;
-		inputs.pitch -= 525;
+		inputs.pitch -= 529; //525
 		// mapping
-		inputs.roll = map(inputs.roll, -522, 501, -maxAngle, maxAngle);
-		inputs.pitch = map(inputs.pitch, -525, 498, -maxAngle, maxAngle);
+		inputs.thrust = map(inputs.thrust, 673, 1023, 1000, 2000);
+		if (inputs.thrust < 1000)
+		{
+			inputs.thrust = 1000;
+		}
+		inputs.roll = map(inputs.roll, -496, 527, -maxAngle, maxAngle);
+		inputs.pitch = map(inputs.pitch, -529, 494, -maxAngle, maxAngle);
+
+		//Serial.println(inputs.thrust);
+	}
+	else
+	{
+		//Serial.println("no radio");
 	}
 }
 
