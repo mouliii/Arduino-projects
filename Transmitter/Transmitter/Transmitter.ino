@@ -19,6 +19,7 @@ struct Input
 	int pitch = 0;
 	int roll = 0;
 	int yaw = 0;
+	bool STOP = false;
 };
 
 Input inputs;
@@ -36,7 +37,7 @@ void setup() {
 	radio.setDataRate(RF24_250KBPS);
 	radio.setRetries(3, 5); // delay, count
 	radio.setAutoAck(false);
-	radio.setPALevel(RF24_PA_MAX);
+	radio.setPALevel(RF24_PA_MIN);
 	radio.openWritingPipe(slaveAddress);
 }
 
@@ -45,20 +46,35 @@ void setup() {
 void loop() {
 	currentMillis = millis();
 	if (currentMillis - prevMillis >= txIntervalMillis) {
-		inputs.thrust = analogRead(A0);
-		inputs.pitch = analogRead(A1);
-		inputs.roll = analogRead(A3);
-		if (digitalRead(2) == LOW)
+		if (!inputs.STOP)
 		{
-			inputs.yaw = 1;
-		}
-		else if (digitalRead(3) == LOW)
-		{
-			inputs.yaw = -1;
+			if (digitalRead(2) == LOW && digitalRead(3) == LOW)
+			{
+				inputs.STOP = true;
+				inputs.thrust = 0;
+				inputs.pitch = 0;
+				inputs.roll = 0;
+				inputs.yaw = 0;
+			}
+			inputs.thrust = analogRead(A0);
+			inputs.pitch = analogRead(A3);
+			inputs.roll = analogRead(A1);
+			if (digitalRead(2) == LOW)
+			{
+				inputs.yaw = 1;
+			}
+			else if (digitalRead(3) == LOW)
+			{
+				inputs.yaw = -1;
+			}
+			else
+			{
+				inputs.yaw = 0;
+			}
 		}
 		else
 		{
-			inputs.yaw = 0;
+			inputs.STOP = true;
 		}
 		send();
 		prevMillis = millis();
@@ -72,23 +88,5 @@ void send() {
 	radio.write(&inputs, sizeof(inputs));
 	// Always use sizeof() as it gives the size as the number of bytes.
 	// For example if dataToSend was an int sizeof() would correctly return 2
-	//Serial.println(analogRead(A3));
+	Serial.println(inputs.thrust);
 }
-
-/*
-throttle
-0 - 674
-100 - 1023
-*/
-/*
-roll
-482 middle
-vas 1023
-oik 0
-*/
-/*
-pitch
-483 middle
-1023 ala
-0 up
-*/
