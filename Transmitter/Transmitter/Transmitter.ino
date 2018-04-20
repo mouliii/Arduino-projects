@@ -48,6 +48,10 @@ void loop() {
 	if (currentMillis - prevMillis >= txIntervalMillis) {
 		if (!inputs.STOP)
 		{
+			inputs.thrust = analogRead(A0);
+			inputs.pitch = analogRead(A3);
+			inputs.roll = analogRead(A1);
+
 			if (digitalRead(2) == LOW && digitalRead(3) == LOW)
 			{
 				inputs.STOP = true;
@@ -56,9 +60,6 @@ void loop() {
 				inputs.roll = 0;
 				inputs.yaw = 0;
 			}
-			inputs.thrust = analogRead(A0);
-			inputs.pitch = analogRead(A3);
-			inputs.roll = analogRead(A1);
 			if (digitalRead(2) == LOW)
 			{
 				inputs.yaw = 1;

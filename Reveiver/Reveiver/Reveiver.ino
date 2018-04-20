@@ -15,7 +15,7 @@
 #define CSN_PIN 10
 
 const byte radioAddress = 76;
-const char maxAngle = 20;
+const char maxAngle = 90;
 
 RF24 radio(CE_PIN, CSN_PIN);
 Servo esc1;	
@@ -36,9 +36,9 @@ Input inputs;
 
 long loop_timer;
 //////////////// PID CONSTANTS ////////////////
-const float kp = 0.0f;
-const float ki = 0.0f;
-const float kd = 15.0f;
+float kp = 0.0f;
+float ki = 0.0f;
+float kd = 15.0f;
 //////////////// //////////// ////////////////
 float pid_p = 0.0f;
 float pid_i = 0.0f;
@@ -46,15 +46,23 @@ float pid_d = 0.0f;
 float prevErrorRoll = 0.0f;
 float prevErrorPitch = 0.0f;
 float error = 0.0f;
-float pid_roll = 0.0f;
-float pid_pitch = 0.0f;
-float pid_yaw = 0.0f;
+float pid_roll = 0;
+float pid_pitch = 0;
+float pid_yaw = 0;
 //////////////////////////////////////////////
 
 void setup() {
-
 	Serial.begin(9600);
 	pinMode(7, OUTPUT);
+	// esc
+	esc1.attach(2); // top left
+	esc2.attach(3); // top right
+	esc3.attach(4); // bottom left
+	esc4.attach(5); // bottom right
+	esc1.writeMicroseconds(1000);
+	esc2.writeMicroseconds(1000);
+	esc3.writeMicroseconds(1000);
+	esc4.writeMicroseconds(1000);
 	// gyro
 	Wire.begin();
 	gyro.setup_mpu_6050_registers();
@@ -67,47 +75,31 @@ void setup() {
 	radio.setAutoAck(false);
 	radio.openReadingPipe(1, radioAddress);
 	radio.startListening();
-	// esc
-	esc1.attach(2); // top left
-	esc2.attach(3); // top right
-	esc3.attach(4); // bottom left
-	esc4.attach(5); // bottom right
-	esc1.writeMicroseconds(1000);
-	esc2.writeMicroseconds(1000);
-	esc3.writeMicroseconds(1000);
-	esc4.writeMicroseconds(1000);
 
 	//Reset the loop timer
 	loop_timer = micros();
 }
 
 void loop() {
-	if (!inputs.STOP)
+	GetTransmitterData();
+	gyro.read_mpu_6050_data();
+	CalculatePID();
+	WriteToMotors();
+	//showData(); // <- debug
+
+	if (micros() - loop_timer > 4000)
 	{
-		GetTransmitterData();
-		gyro.read_mpu_6050_data();
-		CalculatePID();
-		WriteToMotors();
-		//showData(); // <- debug
-
-		if (micros() - loop_timer > 4000)
-		{
-			digitalWrite(7, HIGH);
-			loop_timer = micros();
-		}
-		else
-		{
-			digitalWrite(7, LOW);
-		}
-
-		while (micros() - loop_timer < 4000);                                //Wait until the loop_timer reaches 4000us (250Hz) before starting the next loop
-		{
-			loop_timer = micros();                                           //Reset the loop timer
-		}
+		digitalWrite(7, HIGH);
+		loop_timer = micros();
 	}
 	else
 	{
-		inputs.thrust = 1000;
+		digitalWrite(7, LOW);
+	}
+
+	while (micros() - loop_timer < 4000);                                //Wait until the loop_timer reaches 4000us (250Hz) before starting the next loop
+	{
+		loop_timer = micros();                                           //Reset the loop timer
 	}
 }
 
@@ -126,12 +118,6 @@ void GetTransmitterData() {
 		}
 		inputs.roll = map(inputs.roll, -496, 527, -maxAngle, maxAngle);
 		inputs.pitch = map(inputs.pitch, -529, 494, -maxAngle, maxAngle);
-
-		//Serial.println(inputs.thrust);
-	}
-	else
-	{
-		//Serial.println("no radio");
 	}
 }
 
@@ -154,7 +140,7 @@ void CalculatePID()
 	// kd
 	pid_d = kd * (error - prevErrorRoll);
 	// total roll pid
-	pid_roll = pid_p + pid_i + pid_d;
+	pid_roll = (pid_p + pid_i + pid_d);
 	// total limit check
 	if (pid_roll > maxAngle)
 	{
@@ -164,7 +150,7 @@ void CalculatePID()
 	{
 		pid_roll = -maxAngle;
 	}
-	prevErrorRoll = error;
+	prevErrorRoll = error; 
 	// PITCH  ///////////////////////////////
 	error = gyro.angleRoll() - inputs.pitch; // angleRoll() ON OIKEASTI anglePitch() !!!!!!!!!!!!!!!!!!!
 	// kp
@@ -181,8 +167,8 @@ void CalculatePID()
 	}
 	// kd
 	pid_d = kd * (error - prevErrorPitch);
-	// total roll pid
-	pid_pitch = pid_p + pid_i + pid_d;
+	// total pitch pid
+	pid_pitch = (pid_p + pid_i + pid_d);
 	// total limit check
 	if (pid_pitch > maxAngle)
 	{
@@ -195,22 +181,39 @@ void CalculatePID()
 	prevErrorPitch = error;
 	// YAW  /////////////////////////////////
 	inputs.yaw *= maxAngle;
-
-
 }
 
 void WriteToMotors()
-{
-	esc1.writeMicroseconds(inputs.thrust + pid_roll + pid_pitch - pid_yaw );
-	esc2.writeMicroseconds(inputs.thrust - pid_roll + pid_pitch + pid_yaw );
-	esc3.writeMicroseconds(inputs.thrust + pid_roll - pid_pitch + pid_yaw );
-	esc4.writeMicroseconds(inputs.thrust - pid_roll - pid_pitch - pid_yaw );
+{	// m1, m2, m3, m4
+	int m[] =
+	{
+		inputs.thrust + pid_roll + pid_pitch - pid_yaw,
+		inputs.thrust - pid_roll + pid_pitch + pid_yaw,
+		inputs.thrust + pid_roll - pid_pitch + pid_yaw,
+		inputs.thrust - pid_roll - pid_pitch - pid_yaw 
+	};
+
+	for (int i = 0; i < 4; i++)
+	{
+		if (m[i] < 1000)
+		{
+			m[i] = 1000;
+		}
+		else if (m[i] > 2000)
+		{
+			m[i] = 1900;
+		}
+	}
+	esc1.writeMicroseconds(m[0]);
+	esc2.writeMicroseconds(m[1]);
+	esc3.writeMicroseconds(m[2]);
+	esc4.writeMicroseconds(m[3]);
 }
 
 void showData()
 {
 	//debug only
-	//Serial.println(pid_roll);
+	//Serial.println(gyro.angleRoll() );
 	//Serial.println(pid_pitch);
 	//Serial.println("=========");
 }

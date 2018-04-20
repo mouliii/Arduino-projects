@@ -26,6 +26,7 @@ void Gyro::setup_mpu_6050_registers()
 
 void Gyro::Init()
 {
+	digitalWrite(7, HIGH);
 	for (int cal_int = 0; cal_int < 2000; cal_int++) {                 //Run this code 2000 times
 		if (cal_int % 125 == 0)
 		{
@@ -38,6 +39,7 @@ void Gyro::Init()
 		delay(3);                                                          //Delay 3us to simulate the 250Hz program loop
 	}
 	Serial.println("");
+	digitalWrite(7, LOW);
 	gyro_x_cal /= 2000;                                                  //Divide the gyro_x_cal variable by 2000 to get the avarage offset
 	gyro_y_cal /= 2000;                                                  //Divide the gyro_y_cal variable by 2000 to get the avarage offset
 	gyro_z_cal /= 2000;													//Divide the gyro_z_cal variable by 2000 to get the avarage offset
