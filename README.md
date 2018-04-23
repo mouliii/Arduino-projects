@@ -1,2 +1,2 @@
 # ArduinoQuad
-quad
+quad | ignore sketch1 and 2
