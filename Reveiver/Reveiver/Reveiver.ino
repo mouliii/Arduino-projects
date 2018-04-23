@@ -15,7 +15,7 @@
 #define CSN_PIN 10
 
 const byte radioAddress = 76;
-const char maxAngle = 90;
+const char maxAngle = 400;
 
 RF24 radio(CE_PIN, CSN_PIN);
 Servo esc1;	
@@ -38,7 +38,7 @@ long loop_timer;
 //////////////// PID CONSTANTS ////////////////
 float kp = 0.0f;
 float ki = 0.0f;
-float kd = 15.0f;
+float kd = 20.0f;
 //////////////// //////////// ////////////////
 float pid_p = 0.0f;
 float pid_i = 0.0f;
@@ -46,9 +46,9 @@ float pid_d = 0.0f;
 float prevErrorRoll = 0.0f;
 float prevErrorPitch = 0.0f;
 float error = 0.0f;
-float pid_roll = 0;
-float pid_pitch = 0;
-float pid_yaw = 0;
+int pid_roll = 0;
+int pid_pitch = 0;
+int pid_yaw = 0;
 //////////////////////////////////////////////
 
 void setup() {
@@ -83,7 +83,16 @@ void setup() {
 void loop() {
 	GetTransmitterData();
 	gyro.read_mpu_6050_data();
-	CalculatePID();
+	if (inputs.thrust > 1150)
+	{
+		CalculatePID();
+	}
+	else
+	{
+		pid_roll = 0;
+		pid_pitch = 0;
+		pid_yaw = 0;
+	}
 	WriteToMotors();
 	//showData(); // <- debug
 
@@ -126,9 +135,9 @@ void CalculatePID()
 	// ROLL ///////////////////////////////
 	error = gyro.anglePitch() - inputs.roll; // anglePitch() ON OIKEASTI angleRoll() !!!!!!!!!!!!!!!!!!!
 	// kp
-	pid_p = kp * error;
+	pid_p = kp * error + 0.5f;
 	// ki and limit checks
-	pid_i += ki * error;
+	pid_i += ki * error + 0.5f;
 	if (pid_i > maxAngle)
 	{
 		pid_i = maxAngle;
@@ -138,7 +147,7 @@ void CalculatePID()
 		pid_i = -maxAngle;
 	}
 	// kd
-	pid_d = kd * (error - prevErrorRoll);
+	pid_d = kd * (error - prevErrorRoll) + 0.5f;
 	// total roll pid
 	pid_roll = (pid_p + pid_i + pid_d);
 	// total limit check
@@ -154,9 +163,9 @@ void CalculatePID()
 	// PITCH  ///////////////////////////////
 	error = gyro.angleRoll() - inputs.pitch; // angleRoll() ON OIKEASTI anglePitch() !!!!!!!!!!!!!!!!!!!
 	// kp
-	pid_p = kp * error;
+	pid_p = kp * error + 0.5f;
 	// ki and limit checks
-	pid_i += ki * error;
+	pid_i += ki * error + 0.5f;
 	if (pid_i > maxAngle)
 	{
 		pid_i = maxAngle;
@@ -166,7 +175,7 @@ void CalculatePID()
 		pid_i = -maxAngle;
 	}
 	// kd
-	pid_d = kd * (error - prevErrorPitch);
+	pid_d = kd * (error - prevErrorPitch) + 0.5f;
 	// total pitch pid
 	pid_pitch = (pid_p + pid_i + pid_d);
 	// total limit check
@@ -201,7 +210,7 @@ void WriteToMotors()
 		}
 		else if (m[i] > 2000)
 		{
-			m[i] = 1900;
+			m[i] = 2000;
 		}
 	}
 	esc1.writeMicroseconds(m[0]);
