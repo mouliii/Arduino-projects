@@ -10,7 +10,7 @@
 #include <ServoTimer2\ServoTimer2.h>
 #include <VirtualWire\VirtualWire.h>
 
-const int maxAngle = 400;
+const int maxAngle = 100;
 
 ServoTimer2 esc1;
 ServoTimer2 esc2;
@@ -31,9 +31,9 @@ uint8_t len = sizeof(inputs);
 
 long loop_timer;
 //////////////// PID CONSTANTS ////////////////
-float kp = 0.0f;
-float ki = 0.0f;
-float kd = 20.0f;
+float kp = 3.0f;
+float ki = 2.00f;
+float kd = 30.0f;
 //////////////// //////////// ////////////////
 float pid_p = 0.0f;
 float pid_i = 0.0f;
@@ -90,7 +90,7 @@ void loop() {
 	WriteToMotors();
 	showData(); // <- debug
 
-	if (micros() - loop_timer > 4000)
+	if (micros() - loop_timer > 40000)
 	{
 		digitalWrite(7, HIGH);
 		loop_timer = micros();
@@ -112,8 +112,10 @@ void GetTransmitterData() {
 	{
 		if (vw_get_message((uint8_t*)&inputs, &len))
 		{
+			int maxTurn = maxAngle / 2;
 			// joystick raw input zeroed //
 			inputs.roll -= 530; //522
+			inputs.roll *= -1;
 			inputs.pitch -= 535; //525
 								 // mapping
 			inputs.thrust = map(inputs.thrust, 358, 0, 1000, 2000);
@@ -121,8 +123,8 @@ void GetTransmitterData() {
 			{
 				inputs.thrust = 1000;
 			}
-			inputs.roll = map(inputs.roll, -519, 502, -maxAngle, maxAngle);
-			inputs.pitch = map(inputs.pitch, -524, 500, -maxAngle, maxAngle);
+			inputs.roll = map(inputs.roll, -519, 502, -maxTurn, maxTurn);
+			inputs.pitch = map(inputs.pitch, -524, 500, -maxTurn, maxTurn);
 
 		}
 	}
@@ -132,6 +134,7 @@ void CalculatePID()
 {
 	// ROLL ///////////////////////////////
 	error = gyro.anglePitch() - inputs.roll; // anglePitch() ON OIKEASTI angleRoll() !!!!!!!!!!!!!!!!!!!
+	
 	// kp
 	pid_p = kp * error + 0.5f;
 	// ki and limit checks
@@ -188,16 +191,17 @@ void CalculatePID()
 	prevErrorPitch = error;
 	// YAW  /////////////////////////////////
 	inputs.yaw *= maxAngle;
+
 }
 
 void WriteToMotors()
 {	// m1, m2, m3, m4
 	int m[] =
 	{
-		inputs.thrust + pid_roll + pid_pitch - pid_yaw,
-		inputs.thrust - pid_roll + pid_pitch + pid_yaw,
-		inputs.thrust + pid_roll - pid_pitch + pid_yaw,
-		inputs.thrust - pid_roll - pid_pitch - pid_yaw 
+		inputs.thrust - pid_roll - pid_pitch + pid_yaw,
+		inputs.thrust + pid_roll - pid_pitch - pid_yaw,
+		inputs.thrust - pid_roll + pid_pitch - pid_yaw,
+		inputs.thrust + pid_roll + pid_pitch + pid_yaw 
 	};
 
 	for (int i = 0; i < 4; i++)
@@ -215,16 +219,23 @@ void WriteToMotors()
 	esc2.write(m[1]);
 	esc3.write(m[2]);
 	esc4.write(m[3]);
+	/**/
+	Serial.print( m[0] );
+	Serial.print("   ");
+	Serial.print( m[1] );
+	Serial.print("   ");
+	Serial.print(m[2]);
+	Serial.print("   ");
+	Serial.println(m[3]);
+	/**/
 }
 
 void showData()
 {
 	//debug only
-	Serial.print( inputs.thrust );
-	Serial.print("   ");
-	Serial.print(inputs.roll);
-	Serial.print("   ");
-	Serial.println(inputs.pitch);
+	//Serial.println( inputs.roll );
+	//Serial.print("   ");
+	//Serial.println( pid_pitch);
 	//Serial.println("=========");
 }
 
