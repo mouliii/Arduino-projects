@@ -10,7 +10,8 @@
 #include <ServoTimer2\ServoTimer2.h>
 #include <VirtualWire\VirtualWire.h>
 
-const int maxAngle = 100;
+const int maxAngle = 200;
+int maxTurn = maxAngle / 2;
 
 ServoTimer2 esc1;
 ServoTimer2 esc2;
@@ -31,9 +32,9 @@ uint8_t len = sizeof(inputs);
 
 long loop_timer;
 //////////////// PID CONSTANTS ////////////////
-float kp = 3.0f;
-float ki = 2.00f;
-float kd = 30.0f;
+float kp = 6.0f;
+float ki = 10.00f;
+float kd = 5.0f;
 //////////////// //////////// ////////////////
 float pid_p = 0.0f;
 float pid_i = 0.0f;
@@ -67,7 +68,7 @@ void setup() {
 	Serial.println("SimpleRx Starting");
 	vw_set_rx_pin(11);
 	vw_set_ptt_pin(true);
-	vw_setup(2000);
+	vw_setup(1000);
 	vw_rx_start();
 
 	//Reset the loop timer
@@ -90,17 +91,16 @@ void loop() {
 	WriteToMotors();
 	showData(); // <- debug
 
-	if (micros() - loop_timer > 40000)
+	if (micros() - loop_timer > 4000)
 	{
 		digitalWrite(7, HIGH);
-		loop_timer = micros();
 	}
 	else
 	{
 		digitalWrite(7, LOW);
 	}
 
-	while (micros() - loop_timer < 40000);                                //Wait until the loop_timer reaches 4000us (250Hz) before starting the next loop
+	while (micros() - loop_timer < 4000);                                //Wait until the loop_timer reaches 4000us (250Hz) before starting the next loop
 	{
 		loop_timer = micros();                                           //Reset the loop timer
 	}
@@ -112,7 +112,36 @@ void GetTransmitterData() {
 	{
 		if (vw_get_message((uint8_t*)&inputs, &len))
 		{
-			int maxTurn = maxAngle / 2;
+			// joystick raw input zeroed //
+			inputs.roll -= 530; //522
+			inputs.roll *= -1;
+			inputs.pitch -= 535; //525
+			// mapping
+			inputs.thrust = map(inputs.thrust, 358, 0, 1000, 2000);
+			if (inputs.thrust < 1000)
+			{
+				inputs.thrust = 1000;
+			}
+			inputs.roll = map(inputs.roll, -519, 502, -maxTurn, maxTurn);
+			inputs.pitch = map(inputs.pitch, -524, 500, -maxTurn, maxTurn);
+
+		}
+	}
+	else
+	{
+		while (!vw_have_message() )
+		{
+			if (micros() - loop_timer > 500000)
+			{
+				Serial.println("FUUUK");
+				esc1.write(1000);
+				esc2.write(1000);
+				esc3.write(1000);
+				esc4.write(1000);
+			}
+		}
+		if (vw_get_message((uint8_t*)&inputs, &len))
+		{
 			// joystick raw input zeroed //
 			inputs.roll -= 530; //522
 			inputs.roll *= -1;
@@ -125,8 +154,8 @@ void GetTransmitterData() {
 			}
 			inputs.roll = map(inputs.roll, -519, 502, -maxTurn, maxTurn);
 			inputs.pitch = map(inputs.pitch, -524, 500, -maxTurn, maxTurn);
-
 		}
+		loop_timer = micros();
 	}
 }
 
@@ -190,7 +219,7 @@ void CalculatePID()
 	}
 	prevErrorPitch = error;
 	// YAW  /////////////////////////////////
-	inputs.yaw *= maxAngle;
+	pid_yaw = inputs.yaw * maxTurn;
 
 }
 
@@ -219,7 +248,7 @@ void WriteToMotors()
 	esc2.write(m[1]);
 	esc3.write(m[2]);
 	esc4.write(m[3]);
-	/**/
+	/*
 	Serial.print( m[0] );
 	Serial.print("   ");
 	Serial.print( m[1] );
@@ -227,7 +256,7 @@ void WriteToMotors()
 	Serial.print(m[2]);
 	Serial.print("   ");
 	Serial.println(m[3]);
-	/**/
+	*/
 }
 
 void showData()

@@ -26,7 +26,7 @@ void setup() {
 
 	vw_set_tx_pin(12);
 	vw_set_ptt_pin(true);
-	vw_setup(2000);
+	vw_setup(1000);
 
 }
 
