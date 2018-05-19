@@ -11,7 +11,7 @@
 #include <VirtualWire\VirtualWire.h>
 
 const int maxAngle = 400;
-int maxTurn = maxAngle / 2;
+int maxTurn = maxAngle / 10;
 
 ServoTimer2 esc1;
 ServoTimer2 esc2;
@@ -32,9 +32,9 @@ uint8_t len = sizeof(inputs);
 
 long loop_timer;
 //////////////// PID CONSTANTS ////////////////
-float kp = 40.0f;
-float ki = 20.00f;
-float kd = 10.0f;
+float kp = 6.0f;
+float ki = 0.10f;
+float kd = 2.5f;
 //////////////// //////////// ////////////////
 float pid_p = 0.0f;
 float pid_i = 0.0f;
@@ -190,7 +190,6 @@ void CalculatePID()
 {
 	// ROLL ///////////////////////////////
 	error = gyro.anglePitch() - inputs.roll; // anglePitch() ON OIKEASTI angleRoll() !!!!!!!!!!!!!!!!!!!
-	
 	// kp
 	pid_p = kp * error + 0.5f;
 	// ki and limit checks
@@ -288,11 +287,11 @@ void WriteToMotors()
 void showData()
 {
 	//debug only
-	Serial.print( inputs.thrust );
+	Serial.print( pid_roll );
 	Serial.print("   ");
-	Serial.print( inputs.roll);
+	Serial.print( pid_pitch );
 	Serial.print("   ");
-	Serial.println( inputs.pitch);
+	Serial.println( "" );
 	//Serial.println("=========");
 }
 
