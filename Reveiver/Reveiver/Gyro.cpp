@@ -82,8 +82,8 @@ void Gyro::read_mpu_6050_data()
 	angle_roll_acc = asin((float)acc_x / acc_total_vector) * -57.296;    //Calculate the roll angle
 																		 // calc in setup() ???
 																		 //Place the MPU-6050 spirit level and note the values in the following two lines for calibration
-	angle_pitch_acc -= 0.0;        //<----------                         //Accelerometer calibration value for pitch
-	angle_roll_acc += 2.8;         //<----------                         //Accelerometer calibration value for roll
+	angle_pitch_acc += 0.31f;        //<----------                         //Accelerometer calibration value for pitch
+	angle_roll_acc += -2.50f;         //<----------                         //Accelerometer calibration value for roll
 
 	if (set_gyro_angles) {                                               //If the IMU is already started
 		angle_pitch = angle_pitch * 0.98 + angle_pitch_acc * 0.02;     //Correct the drift of the gyro pitch angle with the accelerometer pitch angle

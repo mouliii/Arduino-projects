@@ -78,8 +78,6 @@ void loop() {
 void send() {
 
 	vw_send((uint8_t*)&inputs, sizeof(inputs));
-
-	Serial.println(inputs.pitch);
 	// Always use sizeof() as it gives the size as the number of bytes.
 	// For example if dataToSend was an int sizeof() would correctly return 2
 
