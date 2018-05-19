@@ -76,33 +76,30 @@ void setup() {
 }
 
 void loop() {
-	GetTransmitterData();
-	gyro.read_mpu_6050_data();
-	if (inputs.thrust > 1150)
+	if (!inputs.STOP)
 	{
-		CalculatePID();
-	}
-	else
-	{
-		pid_roll = 0;
-		pid_pitch = 0;
-		pid_yaw = 0;
-	}
-	WriteToMotors();
-	showData(); // <- debug
+		GetTransmitterData();
+		if (inputs.thrust >= 1200)
+		{
+			gyro.read_mpu_6050_data();
+			CalculatePID();
+			WriteToMotors();
+		}
+		//showData(); // <- debug
 
-	if (micros() - loop_timer > 4000)
-	{
-		digitalWrite(7, HIGH);
-	}
-	else
-	{
-		digitalWrite(7, LOW);
-	}
+		if (micros() - loop_timer > 4000)
+		{
+			digitalWrite(7, HIGH);
+		}
+		else
+		{
+			digitalWrite(7, LOW);
+		}
 
-	while (micros() - loop_timer < 4000);                                //Wait until the loop_timer reaches 4000us (250Hz) before starting the next loop
-	{
-		loop_timer = micros();                                           //Reset the loop timer
+		while (micros() - loop_timer < 4000);                                //Wait until the loop_timer reaches 4000us (250Hz) before starting the next loop
+		{
+			loop_timer = micros();                                           //Reset the loop timer
+		}
 	}
 }
 
@@ -117,8 +114,8 @@ void GetTransmitterData() {
 			inputs.roll *= -1;
 			inputs.pitch -= 535; //525
 			// mapping
-			inputs.thrust = map(inputs.thrust, 358, 0, 1000, 2000);
-			if (inputs.thrust < 1000)
+			inputs.thrust = 1000 + map(inputs.thrust, 358, 0, 0, 1000);
+			if (inputs.thrust < 1200)
 			{
 				inputs.thrust = 1000;
 			}
@@ -133,7 +130,6 @@ void GetTransmitterData() {
 		{
 			if (micros() - loop_timer > 500000)
 			{
-				Serial.println("FUUUK");
 				esc1.write(1000);
 				esc2.write(1000);
 				esc3.write(1000);
@@ -219,8 +215,7 @@ void CalculatePID()
 	}
 	prevErrorPitch = error;
 	// YAW  /////////////////////////////////
-	pid_yaw = inputs.yaw * maxTurn;
-
+	pid_yaw = inputs.yaw * maxTurn / 2;
 }
 
 void WriteToMotors()
@@ -235,20 +230,20 @@ void WriteToMotors()
 
 	for (int i = 0; i < 4; i++)
 	{
-		if (m[i] < 1000)
+		if (m[i] < 1150)
 		{
-			m[i] = 1000;
+			m[i] = 1150;
 		}
-		else if (m[i] > 2000)
+		else if (m[i] > 1850)
 		{
-			m[i] = 2000;
+			m[i] = 1850;
 		}
 	}
 	esc1.write(m[0]);
 	esc2.write(m[1]);
 	esc3.write(m[2]);
 	esc4.write(m[3]);
-	/*
+	
 	Serial.print( m[0] );
 	Serial.print("   ");
 	Serial.print( m[1] );
@@ -256,7 +251,7 @@ void WriteToMotors()
 	Serial.print(m[2]);
 	Serial.print("   ");
 	Serial.println(m[3]);
-	*/
+	
 }
 
 void showData()
