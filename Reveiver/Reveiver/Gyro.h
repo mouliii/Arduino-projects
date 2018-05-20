@@ -18,14 +18,18 @@ class Gyro
 	 void read_mpu_6050_data();
 	 float anglePitch()
 	 {
-		 return angle_pitch;
+		 return angle_pitch - angle_pitch_offset;
 	 }
 	 float angleRoll()
 	 {
-		 return angle_roll;
+		 return angle_roll - angle_roll_offset;
 	 }
 private:
-	float angle_roll_acc, angle_pitch_acc;
+	const float gyroWeight = 0.6f;
+	const float accWight = 1.0f - gyroWeight;
+	float angle_roll_acc = 0;
+	float angle_pitch_acc = 0;
+	float angle_pitch_offset, angle_roll_offset;
 	int gyro_x, gyro_y, gyro_z;
 	long acc_x, acc_y, acc_z, acc_total_vector;
 	int temperature;
@@ -33,8 +37,6 @@ private:
 	int lcd_loop_counter;
 	float angle_pitch, angle_roll;
 	int angle_pitch_buffer, angle_roll_buffer;
-	float angle_pitch_output, angle_roll_output;
-	bool set_gyro_angles = false;
 };
 
 //////////////////////////////////////

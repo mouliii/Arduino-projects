@@ -10,8 +10,8 @@
 #include <ServoTimer2\ServoTimer2.h>
 #include <VirtualWire\VirtualWire.h>
 
-const int maxAngle = 400;
-int maxTurn = maxAngle / 10;
+const int maxAngle = 100;
+int maxTurn = maxAngle / 100;
 
 ServoTimer2 esc1;
 ServoTimer2 esc2;
@@ -32,9 +32,9 @@ uint8_t len = sizeof(inputs);
 
 long loop_timer;
 //////////////// PID CONSTANTS ////////////////
-float kp = 6.0f;
-float ki = 0.10f;
-float kd = 2.5f;
+float kp = 10.0f;
+float ki = 1.0f;
+float kd = 2.0f;
 //////////////// //////////// ////////////////
 float pid_p = 0.0f;
 float pid_i = 0.0f;
@@ -81,17 +81,7 @@ void loop() {
 	{
 		GetTransmitterData();
 		gyro.read_mpu_6050_data();
-		if (inputs.thrust > 1100)
-		{
-			CalculatePID();
-		}
-		else
-		{
-			pid_roll = 0;
-			pid_pitch = 0;
-			pid_yaw = 0;
-		}
-		if (inputs.thrust > 1050)
+		if (inputs.thrust > 1010)
 		{
 			WriteToMotors();
 		}
@@ -101,6 +91,16 @@ void loop() {
 			esc2.write(1000);
 			esc3.write(1000);
 			esc4.write(1000);
+		}
+		if (inputs.thrust > 1100)
+		{
+			CalculatePID();
+		}
+		else
+		{
+			pid_roll = 0;
+			pid_pitch = 0;
+			pid_yaw = 0;
 		}
 		showData(); // <- debug
 
@@ -246,16 +246,17 @@ void CalculatePID()
 	prevErrorPitch = error;
 	// YAW  /////////////////////////////////
 	pid_yaw = inputs.yaw * maxTurn / 2;
+
 }
 
 void WriteToMotors()
 {	// m1, m2, m3, m4
 	int m[] =
 	{
-		inputs.thrust - pid_roll - pid_pitch + pid_yaw,
-		inputs.thrust + pid_roll - pid_pitch - pid_yaw,
-		inputs.thrust - pid_roll + pid_pitch - pid_yaw,
-		inputs.thrust + pid_roll + pid_pitch + pid_yaw 
+		inputs.thrust - pid_roll + pid_pitch + pid_yaw,
+		inputs.thrust + pid_roll + pid_pitch - pid_yaw,
+		inputs.thrust - pid_roll - pid_pitch - pid_yaw,
+		inputs.thrust + pid_roll - pid_pitch + pid_yaw 
 	};
 
 	for (int i = 0; i < 4; i++)
@@ -273,7 +274,7 @@ void WriteToMotors()
 	esc2.write(m[1]);
 	esc3.write(m[2]);
 	esc4.write(m[3]);
-	/*
+	
 	Serial.print( m[0] );
 	Serial.print("   ");
 	Serial.print( m[1] );
@@ -281,18 +282,26 @@ void WriteToMotors()
 	Serial.print(m[2]);
 	Serial.print("   ");
 	Serial.println(m[3]);
-	*/
+	
 }
 
 void showData()
 {
+	
 	//debug only
+	//Serial.print(gyro.anglePitch() );
+	//Serial.print("   ");
+	//Serial.println(gyro.angleRoll() );
+	/*
 	Serial.print( pid_roll );
 	Serial.print("   ");
 	Serial.print( pid_pitch );
 	Serial.print("   ");
 	Serial.println( "" );
+	*/
 	//Serial.println("=========");
+	
+
 }
 
 /*
