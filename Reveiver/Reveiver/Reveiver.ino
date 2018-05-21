@@ -32,9 +32,9 @@ uint8_t len = sizeof(inputs);
 
 long loop_timer;
 //////////////// PID CONSTANTS ////////////////
-float kp = 6.0f;
-float ki = 0.04f;
-float kd = 1.0f;
+float kp = 4.5f;
+float ki = 1.0f;
+float kd = 0.5f;
 //////////////// //////////// ////////////////
 float pid_p = 0.0f;
 float pid_i = 0.0f;
@@ -42,13 +42,13 @@ float pid_d = 0.0f;
 float prevErrorRoll = 0.0f;
 float prevErrorPitch = 0.0f;
 float error = 0.0f;
-int pid_roll = 0;
-int pid_pitch = 0;
-int pid_yaw = 0;
+float pid_roll = 0;
+float pid_pitch = 0;
+float pid_yaw = 0;
 //////////////////////////////////////////////
 
 void setup() {
-	Serial.begin(9600);
+	//Serial.begin(9600);
 	pinMode(7, OUTPUT);
 	// esc
 	esc1.attach(2); // top left
@@ -104,7 +104,7 @@ void loop() {
 			pid_yaw = 0;
 		}
 		
-		showData(); // <- debug
+		//showData(); // <- debug
 
 		if (micros() - loop_timer > 4000)
 		{
@@ -184,9 +184,9 @@ void CalculatePID()
 	// ROLL ///////////////////////////////
 	error = gyro.anglePitch() - inputs.roll; // anglePitch() ON OIKEASTI angleRoll() !!!!!!!!!!!!!!!!!!!
 	// kp
-	pid_p = kp * error + 0.5f;
+	pid_p = kp * error;
 	// ki and limit checks
-	pid_i += ki * error + 0.5f;
+	pid_i += ki * error;
 	if (pid_i > maxAngle)
 	{
 		pid_i = maxAngle;
@@ -196,7 +196,7 @@ void CalculatePID()
 		pid_i = -maxAngle;
 	}
 	// kd
-	pid_d = kd * (error - prevErrorRoll) + 0.5f;
+	pid_d = kd * (error - prevErrorRoll);
 	// total roll pid
 	pid_roll = (pid_p + pid_i + pid_d);
 	// total limit check
@@ -212,9 +212,9 @@ void CalculatePID()
 	// PITCH  ///////////////////////////////
 	error = gyro.angleRoll() - inputs.pitch; // angleRoll() ON OIKEASTI anglePitch() !!!!!!!!!!!!!!!!!!!
 	// kp
-	pid_p = kp * error + 0.5f;
+	pid_p = kp * error;
 	// ki and limit checks
-	pid_i += ki * error + 0.5f;
+	pid_i += ki * error;
 	if (pid_i > maxAngle)
 	{
 		pid_i = maxAngle;
@@ -224,7 +224,7 @@ void CalculatePID()
 		pid_i = -maxAngle;
 	}
 	// kd
-	pid_d = kd * (error - prevErrorPitch) + 0.5f;
+	pid_d = kd * (error - prevErrorPitch);
 	// total pitch pid
 	pid_pitch = (pid_p + pid_i + pid_d);
 	// total limit check
@@ -246,10 +246,10 @@ void WriteToMotors()
 {	// m1, m2, m3, m4
 	int m[] =
 	{
-		inputs.thrust - pid_roll - pid_pitch + pid_yaw,
-		inputs.thrust + pid_roll - pid_pitch - pid_yaw,
-		inputs.thrust - pid_roll + pid_pitch - pid_yaw,
-		inputs.thrust + pid_roll + pid_pitch + pid_yaw 
+		inputs.thrust - pid_roll + pid_pitch + pid_yaw,
+		inputs.thrust + pid_roll + pid_pitch - pid_yaw,
+		inputs.thrust - pid_roll - pid_pitch - pid_yaw,
+		inputs.thrust + pid_roll - pid_pitch + pid_yaw 
 	};
 
 	for (int i = 0; i < 4; i++)
@@ -286,13 +286,13 @@ void showData()
 	Serial.print(gyro.anglePitch() );
 	Serial.print("   ");
 	Serial.println(gyro.angleRoll() );
-	*/
+	
 	Serial.print( pid_roll );
 	Serial.print("   ");
 	Serial.print( pid_pitch );
 	Serial.print("   ");
 	Serial.println( "" );
-	
+	*/
 	//Serial.println("=========");
 	
 
