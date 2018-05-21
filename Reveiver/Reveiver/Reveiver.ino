@@ -11,7 +11,7 @@
 #include <VirtualWire\VirtualWire.h>
 
 const int maxAngle = 100;
-int maxTurn = maxAngle / 100;
+int maxTurn = maxAngle / 10;
 
 ServoTimer2 esc1;
 ServoTimer2 esc2;
@@ -32,9 +32,9 @@ uint8_t len = sizeof(inputs);
 
 long loop_timer;
 //////////////// PID CONSTANTS ////////////////
-float kp = 10.0f;
-float ki = 1.0f;
-float kd = 2.0f;
+float kp = 6.0f;
+float ki = 0.04f;
+float kd = 1.0f;
 //////////////// //////////// ////////////////
 float pid_p = 0.0f;
 float pid_i = 0.0f;
@@ -81,7 +81,7 @@ void loop() {
 	{
 		GetTransmitterData();
 		gyro.read_mpu_6050_data();
-		if (inputs.thrust > 1010)
+		if (inputs.thrust > 1050)
 		{
 			WriteToMotors();
 		}
@@ -92,6 +92,7 @@ void loop() {
 			esc3.write(1000);
 			esc4.write(1000);
 		}
+		
 		if (inputs.thrust > 1100)
 		{
 			CalculatePID();
@@ -102,6 +103,7 @@ void loop() {
 			pid_pitch = 0;
 			pid_yaw = 0;
 		}
+		
 		showData(); // <- debug
 
 		if (micros() - loop_timer > 4000)
@@ -140,17 +142,12 @@ void GetTransmitterData() {
 		{
 			// joystick raw input zeroed //
 			inputs.roll -= 533; //522
-			inputs.roll *= -1;
+			//inputs.roll *= -1;
 			inputs.pitch -= 535; //525
 			// mapping
-			inputs.thrust = 1000 + map(inputs.thrust, 358, 0, 0, 1000);
-			if (inputs.thrust < 1200)
-			{
-				inputs.thrust = 1000;
-			}
+			inputs.thrust = 1000 + map(inputs.thrust, 662, 1023, 0, 1000);
 			inputs.roll = map(inputs.roll, -501, 522, -maxTurn, maxTurn);
 			inputs.pitch = map(inputs.pitch, -524, 500, -maxTurn, maxTurn);
-
 		}
 	}
 	else
@@ -173,11 +170,7 @@ void GetTransmitterData() {
 			inputs.roll *= -1;
 			inputs.pitch -= 535; //525
 								 // mapping
-			inputs.thrust = 1000 + map(inputs.thrust, 358, 0, 0, 1000);
-			if (inputs.thrust < 1200)
-			{
-				inputs.thrust = 1000;
-			}
+			inputs.thrust = 1000 + map(inputs.thrust, 662, 1023, 0, 1000);
 			inputs.roll = map(inputs.roll, -501, 522, -maxTurn, maxTurn);
 			inputs.pitch = map(inputs.pitch, -524, 500, -maxTurn, maxTurn);
 		}
@@ -253,10 +246,10 @@ void WriteToMotors()
 {	// m1, m2, m3, m4
 	int m[] =
 	{
-		inputs.thrust - pid_roll + pid_pitch + pid_yaw,
-		inputs.thrust + pid_roll + pid_pitch - pid_yaw,
-		inputs.thrust - pid_roll - pid_pitch - pid_yaw,
-		inputs.thrust + pid_roll - pid_pitch + pid_yaw 
+		inputs.thrust - pid_roll - pid_pitch + pid_yaw,
+		inputs.thrust + pid_roll - pid_pitch - pid_yaw,
+		inputs.thrust - pid_roll + pid_pitch - pid_yaw,
+		inputs.thrust + pid_roll + pid_pitch + pid_yaw 
 	};
 
 	for (int i = 0; i < 4; i++)
@@ -274,7 +267,7 @@ void WriteToMotors()
 	esc2.write(m[1]);
 	esc3.write(m[2]);
 	esc4.write(m[3]);
-	
+	/*
 	Serial.print( m[0] );
 	Serial.print("   ");
 	Serial.print( m[1] );
@@ -282,23 +275,24 @@ void WriteToMotors()
 	Serial.print(m[2]);
 	Serial.print("   ");
 	Serial.println(m[3]);
-	
+	*/
 }
 
 void showData()
 {
 	
 	//debug only
-	//Serial.print(gyro.anglePitch() );
-	//Serial.print("   ");
-	//Serial.println(gyro.angleRoll() );
 	/*
+	Serial.print(gyro.anglePitch() );
+	Serial.print("   ");
+	Serial.println(gyro.angleRoll() );
+	*/
 	Serial.print( pid_roll );
 	Serial.print("   ");
 	Serial.print( pid_pitch );
 	Serial.print("   ");
 	Serial.println( "" );
-	*/
+	
 	//Serial.println("=========");
 	
 
