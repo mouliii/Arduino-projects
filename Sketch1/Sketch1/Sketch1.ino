@@ -1,55 +1,48 @@
-// SimpleTx - the master or the transmitter
 
+#include <Wire.h>
 #include <SPI.h>
 #include <RF24.h>
-#include <VirtualWire.h>
 
 #define CE_PIN   9
 #define CSN_PIN 10
 
-const byte slaveAddress = 76;
+const byte radioAddress = 76;
 
-RF24 radio(CE_PIN, CSN_PIN); // Create a Radio
+RF24 radio(CE_PIN, CSN_PIN);
 
-unsigned long currentMillis;
-unsigned long prevMillis;
-unsigned long txIntervalMillis = 4; // send once per second
-
-
-int msg = 20;
+long loop_timer;
+int data;
 
 void setup() {
 
 	Serial.begin(9600);
+	// radio
+	Serial.println("SimpleRx Starting");
 
-	Serial.println("SimpleTx Starting");
-	/*
+	pinMode(2, OUTPUT);
+	pinMode(3, OUTPUT);
+	digitalWrite(2, LOW);
+	digitalWrite(3, LOW);
+
 	radio.begin();
 	radio.setDataRate(RF24_250KBPS);
-	//radio.setRetries(3, 5); // delay, count
+	//radio.setPALevel(RF24_PA_MIN);
 	radio.setAutoAck(false);
-	radio.setPALevel(RF24_PA_MAX);
-	radio.openWritingPipe(slaveAddress);
-	*/
-	vw_set_ptt_inverted(true); // Required for DR3100
-	vw_set_tx_pin(7);
-	vw_setup(1000);	 // Bits per sec
-	
-}
+	radio.openReadingPipe(1, radioAddress);
+	radio.startListening();
 
-//====================
+	//Reset the loop timer
+	loop_timer = micros();
+}
 
 void loop() {
-	currentMillis = millis();
-	if (currentMillis - prevMillis >= txIntervalMillis) {
-		send();
-		prevMillis = millis();
-	}
+	GetTransmitterData();
 }
 
-//====================
+void GetTransmitterData() {
 
-void send() {
-	//radio.write(&msg, sizeof(msg));
-	vw_send((uint8_t *)&msg, sizeof(msg));
+	if (radio.available()) {
+		radio.read(&data, sizeof(data));
+		Serial.println(data);
+	}
 }

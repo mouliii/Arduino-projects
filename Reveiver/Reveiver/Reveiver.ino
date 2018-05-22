@@ -4,11 +4,16 @@
 // BATTERY COMPENSATION
 ///////////////////////////////////////////////
 
-
 #include "Gyro.h"
 #include <Wire.h>
 #include <ServoTimer2\ServoTimer2.h>
-#include <VirtualWire\VirtualWire.h>
+#include <RF24.h>
+
+#define CE_PIN   9
+#define CSN_PIN 10
+
+const byte radioAddress = 76;
+RF24 radio(CE_PIN, CSN_PIN);
 
 const int maxAngle = 100;
 int maxTurn = maxAngle / 10;
@@ -28,7 +33,6 @@ struct Input
 	bool STOP = false;
 };
 Input inputs;
-uint8_t len = sizeof(inputs);
 
 long loop_timer;
 //////////////// PID CONSTANTS ////////////////
@@ -48,7 +52,7 @@ float pid_yaw = 0;
 //////////////////////////////////////////////
 
 void setup() {
-	//Serial.begin(9600);
+	Serial.begin(9600);
 	pinMode(7, OUTPUT);
 	// esc
 	esc1.attach(2); // top left
@@ -67,11 +71,12 @@ void setup() {
 	gyro.Init();
 	// radio
 	Serial.println("SimpleRx Starting");
-	vw_set_rx_pin(11);
-	vw_set_ptt_pin(true);
-	vw_setup(1000);
-	vw_rx_start();
-
+	radio.begin();
+	radio.setDataRate(RF24_250KBPS);
+	//radio.setPALevel(RF24_PA_MIN);
+	radio.setAutoAck(false);
+	radio.openReadingPipe(1, radioAddress);
+	radio.startListening();
 	//Reset the loop timer
 	loop_timer = micros();
 }
@@ -104,7 +109,7 @@ void loop() {
 			pid_yaw = 0;
 		}
 		
-		//showData(); // <- debug
+		showData(); // <- debug
 
 		if (micros() - loop_timer > 4000)
 		{
@@ -136,24 +141,13 @@ void loop() {
 
 void GetTransmitterData() {
 	
-	if (vw_have_message())
+	if (radio.available() )
 	{
-		if (vw_get_message((uint8_t*)&inputs, &len))
-		{
-			// joystick raw input zeroed //
-			inputs.roll -= 533; //522
-			//inputs.roll *= -1;
-			inputs.pitch -= 535; //525
-			// mapping
-			inputs.thrust = 1000 + map(inputs.thrust, 662, 1023, 0, 1000);
-			inputs.roll = map(inputs.roll, -501, 522, -maxTurn, maxTurn);
-			inputs.pitch = map(inputs.pitch, -524, 500, -maxTurn, maxTurn);
-		}
+		ListenRadio();
 	}
 	else
-	{
-		
-		while (!vw_have_message() )
+	{	
+		while (!radio.available() )
 		{
 			if (micros() - loop_timer > 500000)
 			{
@@ -163,19 +157,8 @@ void GetTransmitterData() {
 				esc4.write(1000);
 			}
 		}
-		if (vw_get_message((uint8_t*)&inputs, &len))
-		{
-			// joystick raw input zeroed //
-			inputs.roll -= 533; //522
-			inputs.roll *= -1;
-			inputs.pitch -= 535; //525
-								 // mapping
-			inputs.thrust = 1000 + map(inputs.thrust, 662, 1023, 0, 1000);
-			inputs.roll = map(inputs.roll, -501, 522, -maxTurn, maxTurn);
-			inputs.pitch = map(inputs.pitch, -524, 500, -maxTurn, maxTurn);
-		}
+		ListenRadio();
 		loop_timer = micros();
-		
 	}
 }
 
@@ -267,7 +250,7 @@ void WriteToMotors()
 	esc2.write(m[1]);
 	esc3.write(m[2]);
 	esc4.write(m[3]);
-	/*
+	
 	Serial.print( m[0] );
 	Serial.print("   ");
 	Serial.print( m[1] );
@@ -275,7 +258,20 @@ void WriteToMotors()
 	Serial.print(m[2]);
 	Serial.print("   ");
 	Serial.println(m[3]);
-	*/
+	
+}
+
+void ListenRadio()
+{
+	radio.read(&inputs, sizeof(inputs));
+	// joystick raw input zeroed //
+	inputs.roll -= 532; //522
+	//inputs.roll *= -1;
+	inputs.pitch -= 535; //525
+	// mapping
+	inputs.thrust = 1000 + map(inputs.thrust, 662, 1023, 0, 1000);
+	inputs.roll = 1 + map(inputs.roll, -500, 520, -maxTurn, maxTurn);
+	inputs.pitch = map(inputs.pitch, -524, 500, -maxTurn, maxTurn);
 }
 
 void showData()
@@ -286,12 +282,12 @@ void showData()
 	Serial.print(gyro.anglePitch() );
 	Serial.print("   ");
 	Serial.println(gyro.angleRoll() );
-	
-	Serial.print( pid_roll );
+	*
+	Serial.print( inputs.thrust);
 	Serial.print("   ");
-	Serial.print( pid_pitch );
+	Serial.print( inputs.roll );
 	Serial.print("   ");
-	Serial.println( "" );
+	Serial.println( inputs.pitch );
 	*/
 	//Serial.println("=========");
 	
