@@ -97,8 +97,7 @@ void loop() {
 			esc3.write(1000);
 			esc4.write(1000);
 		}
-		
-		if (inputs.thrust > 1100)
+		if (inputs.thrust > 1200)
 		{
 			CalculatePID();
 		}
@@ -160,6 +159,7 @@ void GetTransmitterData() {
 		ListenRadio();
 		loop_timer = micros();
 	}
+	
 }
 
 void CalculatePID()
@@ -250,7 +250,7 @@ void WriteToMotors()
 	esc2.write(m[1]);
 	esc3.write(m[2]);
 	esc4.write(m[3]);
-	
+	/*
 	Serial.print( m[0] );
 	Serial.print("   ");
 	Serial.print( m[1] );
@@ -258,7 +258,7 @@ void WriteToMotors()
 	Serial.print(m[2]);
 	Serial.print("   ");
 	Serial.println(m[3]);
-	
+	*/
 }
 
 void ListenRadio()
