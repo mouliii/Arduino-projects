@@ -88,6 +88,18 @@ void loop() {
 		gyro.read_mpu_6050_data();
 		if (inputs.thrust > 1050)
 		{
+			if (inputs.thrust > 1100)
+			{
+				CalculatePID();
+				digitalWrite(7, HIGH);
+			}
+			else
+			{
+				pid_roll = 0;
+				pid_pitch = 0;
+				pid_yaw = 0;
+				digitalWrite(7, LOW);
+			}
 			WriteToMotors();
 		}
 		else
@@ -97,27 +109,8 @@ void loop() {
 			esc3.write(1000);
 			esc4.write(1000);
 		}
-		if (inputs.thrust > 1200)
-		{
-			CalculatePID();
-		}
-		else
-		{
-			pid_roll = 0;
-			pid_pitch = 0;
-			pid_yaw = 0;
-		}
 		
 		showData(); // <- debug
-
-		if (micros() - loop_timer > 4000)
-		{
-			digitalWrite(7, HIGH);
-		}
-		else
-		{
-			digitalWrite(7, LOW);
-		}
 
 		while (micros() - loop_timer < 4000);                                //Wait until the loop_timer reaches 4000us (250Hz) before starting the next loop
 		{
@@ -168,7 +161,7 @@ void CalculatePID()
 	error = gyro.anglePitch() - inputs.roll; // anglePitch() ON OIKEASTI angleRoll() !!!!!!!!!!!!!!!!!!!
 	// kp
 	pid_p = kp * error;
-	// ki and limit checks
+	// ki
 	pid_i += ki * error;
 	if (pid_i > maxAngle)
 	{
@@ -196,7 +189,7 @@ void CalculatePID()
 	error = gyro.angleRoll() - inputs.pitch; // angleRoll() ON OIKEASTI anglePitch() !!!!!!!!!!!!!!!!!!!
 	// kp
 	pid_p = kp * error;
-	// ki and limit checks
+	// ki
 	pid_i += ki * error;
 	if (pid_i > maxAngle)
 	{
@@ -222,7 +215,6 @@ void CalculatePID()
 	prevErrorPitch = error;
 	// YAW  /////////////////////////////////
 	pid_yaw = inputs.yaw * maxTurn / 2;
-
 }
 
 void WriteToMotors()
@@ -276,7 +268,6 @@ void ListenRadio()
 
 void showData()
 {
-	
 	//debug only
 	/*
 	Serial.print(gyro.anglePitch() );
