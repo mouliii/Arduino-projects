@@ -36,9 +36,9 @@ Input inputs;
 
 long loop_timer;
 //////////////// PID CONSTANTS ////////////////
-float kp = 4.5f;
-float ki = 1.0f;
-float kd = 0.5f;
+float kp = 1.0f;
+float ki = 0.0f;
+float kd = 0.0f;
 //////////////// //////////// ////////////////
 float pid_p = 0.0f;
 float pid_i = 0.0f;
@@ -50,6 +50,8 @@ float pid_roll = 0;
 float pid_pitch = 0;
 float pid_yaw = 0;
 //////////////////////////////////////////////
+
+bool motors = false;
 
 void setup() {
 	Serial.begin(9600);
@@ -88,17 +90,15 @@ void loop() {
 		gyro.read_mpu_6050_data();
 		if (inputs.thrust > 1050)
 		{
-			if (inputs.thrust > 1100)
+			if (inputs.thrust > 1150)
 			{
 				CalculatePID();
-				digitalWrite(7, HIGH);
 			}
 			else
 			{
 				pid_roll = 0;
 				pid_pitch = 0;
 				pid_yaw = 0;
-				digitalWrite(7, LOW);
 			}
 			WriteToMotors();
 		}
@@ -242,15 +242,17 @@ void WriteToMotors()
 	esc2.write(m[1]);
 	esc3.write(m[2]);
 	esc4.write(m[3]);
-	/*
-	Serial.print( m[0] );
-	Serial.print("   ");
-	Serial.print( m[1] );
-	Serial.print("   ");
-	Serial.print(m[2]);
-	Serial.print("   ");
-	Serial.println(m[3]);
-	*/
+
+	if (motors)
+	{
+		Serial.print(m[0]);
+		Serial.print("   ");
+		Serial.print(m[1]);
+		Serial.print("   ");
+		Serial.print(m[2]);
+		Serial.print("   ");
+		Serial.println(m[3]);
+	}
 }
 
 void ListenRadio()
@@ -281,8 +283,6 @@ void showData()
 	Serial.println( inputs.pitch );
 	*/
 	//Serial.println("=========");
-	
-
 }
 
 /*

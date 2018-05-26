@@ -29,8 +29,7 @@ void Gyro::Init()
 	digitalWrite(7, HIGH);
 	for (int cal_int = 0; cal_int < 2000; cal_int++) {                 //Run this code 2000 times
 		if (cal_int % 125 == 0)
-		{
-			Serial.print('.');                                             //Print a dot on the LCD every 125 readings
+		{                                          //Print a dot on the LCD every 125 readings
 		}
 		read_mpu_6050_data();                                              //Read the raw acc and gyro data from the MPU-6050
 		gyro_x_cal += gyro_x;                                              //Add the gyro x-axis offset to the gyro_x_cal variable
@@ -40,7 +39,6 @@ void Gyro::Init()
 		angle_roll_acc += angle_roll_acc;         //<----------                         //Accelerometer calibration value for roll
 		delay(3);                                                          //Delay 3us to simulate the 250Hz program loop
 	}
-	Serial.println("");
 	digitalWrite(7, LOW);
 	gyro_x_cal /= 2000;                                                  //Divide the gyro_x_cal variable by 2000 to get the avarage offset
 	gyro_y_cal /= 2000;                                                  //Divide the gyro_y_cal variable by 2000 to get the avarage offset
