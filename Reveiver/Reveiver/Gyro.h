@@ -24,18 +24,22 @@ class Gyro
 	 {
 		 return angle_roll - angle_roll_offset;
 	 }
+	 float angleYaw()
+	 {
+		 return angle_z;
+	 }
 private:
-	const float gyroWeight = 0.6f;
+	const float gyroWeight = 0.7f;
 	const float accWight = 1.0f - gyroWeight;
 	float angle_roll_acc = 0;
 	float angle_pitch_acc = 0;
-	float angle_pitch_offset, angle_roll_offset;
+	const float angle_pitch_offset = -1.4f;
+	const float angle_roll_offset = 7.1f;
 	int gyro_x, gyro_y, gyro_z;
 	long acc_x, acc_y, acc_z, acc_total_vector;
 	int temperature;
 	long gyro_x_cal, gyro_y_cal, gyro_z_cal;
-	int lcd_loop_counter;
-	float angle_pitch, angle_roll;
+	float angle_pitch, angle_roll, angle_z;
 	int angle_pitch_buffer, angle_roll_buffer;
 };
 

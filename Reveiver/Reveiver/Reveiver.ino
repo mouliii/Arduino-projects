@@ -36,16 +36,17 @@ Input inputs;
 
 long loop_timer;
 //////////////// PID CONSTANTS ////////////////
-float kp = 1.0f;
-float ki = 0.0f;
-float kd = 0.0f;
+float kp = 0.2f;
+float ki = 0.001f;
+float kd = 0.01f;
 //////////////// //////////// ////////////////
 float pid_p = 0.0f;
 float pid_i = 0.0f;
 float pid_d = 0.0f;
 float prevErrorRoll = 0.0f;
 float prevErrorPitch = 0.0f;
-float error = 0.0f;
+float errorRoll = 0.0f;
+float errorPitch = 0.0f;
 float pid_roll = 0;
 float pid_pitch = 0;
 float pid_yaw = 0;
@@ -158,11 +159,11 @@ void GetTransmitterData() {
 void CalculatePID()
 {
 	// ROLL ///////////////////////////////
-	error = gyro.anglePitch() - inputs.roll; // anglePitch() ON OIKEASTI angleRoll() !!!!!!!!!!!!!!!!!!!
+	errorRoll = gyro.anglePitch() - inputs.roll; // anglePitch() ON OIKEASTI angleRoll() !!!!!!!!!!!!!!!!!!!
 	// kp
-	pid_p = kp * error;
+	pid_p = kp * errorRoll;
 	// ki
-	pid_i += ki * error;
+	pid_i += ki * errorRoll;
 	if (pid_i > maxAngle)
 	{
 		pid_i = maxAngle;
@@ -172,7 +173,7 @@ void CalculatePID()
 		pid_i = -maxAngle;
 	}
 	// kd
-	pid_d = kd * (error - prevErrorRoll);
+	pid_d = kd * (errorRoll - prevErrorRoll);
 	// total roll pid
 	pid_roll = (pid_p + pid_i + pid_d);
 	// total limit check
@@ -184,13 +185,13 @@ void CalculatePID()
 	{
 		pid_roll = -maxAngle;
 	}
-	prevErrorRoll = error; 
+	prevErrorRoll = errorRoll;
 	// PITCH  ///////////////////////////////
-	error = gyro.angleRoll() - inputs.pitch; // angleRoll() ON OIKEASTI anglePitch() !!!!!!!!!!!!!!!!!!!
+	errorPitch = gyro.angleRoll() - inputs.pitch; // angleRoll() ON OIKEASTI anglePitch() !!!!!!!!!!!!!!!!!!!
 	// kp
-	pid_p = kp * error;
+	pid_p = kp * errorPitch;
 	// ki
-	pid_i += ki * error;
+	pid_i += ki * errorPitch;
 	if (pid_i > maxAngle)
 	{
 		pid_i = maxAngle;
@@ -200,7 +201,7 @@ void CalculatePID()
 		pid_i = -maxAngle;
 	}
 	// kd
-	pid_d = kd * (error - prevErrorPitch);
+	pid_d = kd * (errorPitch - prevErrorPitch);
 	// total pitch pid
 	pid_pitch = (pid_p + pid_i + pid_d);
 	// total limit check
@@ -212,9 +213,9 @@ void CalculatePID()
 	{
 		pid_pitch = -maxAngle;
 	}
-	prevErrorPitch = error;
+	prevErrorPitch = errorPitch;
 	// YAW  /////////////////////////////////
-	pid_yaw = inputs.yaw * maxTurn / 2;
+	pid_yaw = inputs.yaw * maxTurn / 10;
 }
 
 void WriteToMotors()
@@ -275,7 +276,7 @@ void showData()
 	Serial.print(gyro.anglePitch() );
 	Serial.print("   ");
 	Serial.println(gyro.angleRoll() );
-	*
+	/*
 	Serial.print( inputs.thrust);
 	Serial.print("   ");
 	Serial.print( inputs.roll );

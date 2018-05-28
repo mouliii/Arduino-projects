@@ -35,8 +35,8 @@ void Gyro::Init()
 		gyro_x_cal += gyro_x;                                              //Add the gyro x-axis offset to the gyro_x_cal variable
 		gyro_y_cal += gyro_y;                                              //Add the gyro y-axis offset to the gyro_y_cal variable
 		gyro_z_cal += gyro_z;                                              //Add the gyro z-axis offset to the gyro_z_cal variable
-		angle_pitch_acc += angle_pitch_acc;        //<----------                         //Accelerometer calibration value for pitch
-		angle_roll_acc += angle_roll_acc;         //<----------                         //Accelerometer calibration value for roll
+		//angle_pitch_acc += angle_pitch_acc;        //<----------                         //Accelerometer calibration value for pitch
+		//angle_roll_acc += angle_roll_acc;         //<----------                         //Accelerometer calibration value for roll
 		delay(3);                                                          //Delay 3us to simulate the 250Hz program loop
 	}
 	digitalWrite(7, LOW);
@@ -45,11 +45,11 @@ void Gyro::Init()
 	gyro_z_cal /= 2000;													//Divide the gyro_z_cal variable by 2000 to get the avarage offset
 
 	//TODO calibrate here
-	angle_pitch_acc /= 2000;
-	angle_roll_acc /= 2000;
+	//angle_pitch_acc /= 2000;
+	//angle_roll_acc /= 2000;
 
-	angle_pitch_offset = angle_pitch;
-	angle_roll_offset = angle_roll;
+	//angle_pitch_offset = angle_pitch;
+	//angle_roll_offset = angle_roll;
 
 	angle_pitch = angle_pitch_acc;										//Set the gyro pitch angle equal to the accelerometer pitch angle
 	angle_roll = angle_roll_acc;										//Set the gyro roll angle equal to the accelerometer roll angle
@@ -79,11 +79,11 @@ void Gyro::read_mpu_6050_data()
 																		 //0.0000611 = 1 / (250Hz / 65.5)
 	angle_pitch += gyro_x * 0.0000611;                                   //Calculate the traveled pitch angle and add this to the angle_pitch variable
 	angle_roll += gyro_y * 0.0000611;                                    //Calculate the traveled roll angle and add this to the angle_roll variable
+	angle_z += gyro_z * 0.0000611;
 
 																		 //0.000001066 = 0.0000611 * (3.142(PI) / 180degr) The Arduino sin function is in radians
 	angle_pitch += angle_roll * sin(gyro_z * 0.000001066);               //If the IMU has yawed transfer the roll angle to the pitch angel
 	angle_roll -= angle_pitch * sin(gyro_z * 0.000001066);               //If the IMU has yawed transfer the pitch angle to the roll angel
-
 																		 //Accelerometer angle calculations
 	acc_total_vector = sqrt((acc_x * acc_x) + (acc_y * acc_y) + (acc_z * acc_z)); //Calculate the total accelerometer vector
 																				  //57.296 = 1 / (3.142 / 180) The Arduino asin function is in radians
@@ -92,6 +92,7 @@ void Gyro::read_mpu_6050_data()
 
 	angle_pitch = angle_pitch * 0.98f + angle_pitch_acc * 0.02f;			//Correct the drift of the gyro pitch angle with the accelerometer pitch angle
 	angle_roll = angle_roll * 0.98f + angle_roll_acc * 0.02f;				 //Correct the drift of the gyro roll angle with the accelerometer roll angle
+	angle_z = angle_z * 0.98f + gyro_z * 0.02f;
 	
 	angle_pitch = gyroWeight * angle_pitch + accWight * angle_pitch_acc;
 	angle_roll = gyroWeight * angle_roll + accWight * angle_roll_acc;
