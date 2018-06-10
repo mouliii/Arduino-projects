@@ -1,5 +1,5 @@
 // SimpleTx - the master or the transmitter
-#include <SPI.h>
+#include <RF24_config.h>
 #include <RF24.h>
 
 #define CE_PIN   9
@@ -13,16 +13,7 @@ unsigned long currentMillis;
 unsigned long prevMillis;
 unsigned long txIntervalMillis = 4; // send once per 4ms
 
-struct Input
-{
-	int thrust = 0;
-	int pitch = 0;
-	int roll = 0;
-	int yaw = 0;
-	bool STOP = false;
-};
-
-Input inputs;
+int inputs[2] = { 0,0 };
 
 void setup() {
 
@@ -45,38 +36,10 @@ void setup() {
 void loop() {
 	currentMillis = millis();
 	if (currentMillis - prevMillis >= txIntervalMillis) {
-		if (!inputs.STOP)
-		{
-			inputs.thrust = analogRead(A0);
-			inputs.pitch = analogRead(A1);
-			inputs.roll = analogRead(A2);
 
-			if (digitalRead(2) == LOW)
-			{
-				inputs.yaw = 1;
-			}
-			else if (digitalRead(3) == LOW)
-			{
-				inputs.yaw = -1;
-			}
-			else
-			{
-				inputs.yaw = 0;
-			}
-			// HÄTÄ SEIS
-			if (digitalRead(2) == LOW && digitalRead(3) == LOW)
-			{
-				inputs.STOP = true;
-				inputs.thrust = 0;
-				inputs.pitch = 0;
-				inputs.roll = 0;
-				inputs.yaw = 0;
-			}
-		}
-		else
-		{
-			inputs.STOP = true;
-		}
+		inputs[0] = analogRead(A0);
+		inputs[1] = analogRead(A2);
+		
 		send();
 		prevMillis = millis();
 	}
