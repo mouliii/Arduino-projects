@@ -1,48 +1,35 @@
+/*
+Example for different sending methods
 
-#include <Wire.h>
-#include <SPI.h>
-#include <RF24.h>
+https://github.com/sui77/rc-switch/
 
-#define CE_PIN   9
-#define CSN_PIN 10
+*/
 
-const byte radioAddress = 76;
+#include <RCSwitch.h>
 
-RF24 radio(CE_PIN, CSN_PIN);
-
-long loop_timer;
-int data;
+RCSwitch mySwitch = RCSwitch();
 
 void setup() {
 
 	Serial.begin(9600);
-	// radio
-	Serial.println("SimpleRx Starting");
 
-	pinMode(2, OUTPUT);
-	pinMode(3, OUTPUT);
-	digitalWrite(2, LOW);
-	digitalWrite(3, LOW);
+	// Transmitter is connected to Arduino Pin #10  
+	mySwitch.enableTransmit(10);
 
-	radio.begin();
-	radio.setDataRate(RF24_250KBPS);
-	//radio.setPALevel(RF24_PA_MIN);
-	radio.setAutoAck(false);
-	radio.openReadingPipe(1, radioAddress);
-	radio.startListening();
+	// Optional set protocol (default is 1, will work for most outlets)
+	// mySwitch.setProtocol(2);
 
-	//Reset the loop timer
-	loop_timer = micros();
+	// Optional set pulse length.
+	// mySwitch.setPulseLength(320);
+	
+	// Optional set number of transmission repetitions.
+	// mySwitch.setRepeatTransmit(15);
+
 }
 
 void loop() {
-	GetTransmitterData();
-}
+	/* Same switch as above, but using binary code */
+	mySwitch.send("00110");
 
-void GetTransmitterData() {
-
-	if (radio.available()) {
-		radio.read(&data, sizeof(data));
-		Serial.println(data);
-	}
+	delay(5000);
 }

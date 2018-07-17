@@ -1,55 +1,55 @@
-// SimpleTx - the master or the transmitter
+#include <IRremote.h>
 
-#include <SPI.h>
-#include <RF24.h>
-
-#define CE_PIN   9
-#define CSN_PIN 10
-
-const byte slaveAddress = 76;
-
-RF24 radio(CE_PIN, CSN_PIN); // Create a Radio
-
-unsigned long currentMillis;
-unsigned long prevMillis;
-unsigned long txIntervalMillis = 4; // send once per second
+/*
+vaatii testaamista
+*/
 
 
-int msg = 0;
+#define pon 20L
+#define poff 32L
+#define chd 27L
+#define chu 28L
+#define vold 37L
+#define volu 36L
 
-void setup() {
+IRsend irsend;
+unsigned long com = 0L;
+void Send(unsigned long command);
 
-	Serial.begin(9600);
-
-	Serial.println("SimpleTx Starting");
-
-	radio.begin();
-	radio.setDataRate(RF24_250KBPS);
-	//radio.setRetries(3, 5); // delay, count
-	radio.setAutoAck(false);
-	radio.setPALevel(RF24_PA_MAX);
-	radio.openWritingPipe(slaveAddress);
-
-
-}
-
-//====================
-
-void loop() {
-	currentMillis = millis();
-	if (currentMillis - prevMillis >= txIntervalMillis) {
-		send();
-		prevMillis = millis();
+void setup()
+{
+	for (int i = 0; i < 3; i++) {
+		irsend.sendRC5(20, 12);
+		delay(40);
 	}
+	delay(10000);
 }
 
-//====================
+void loop() 
+{
+	Send(chd);
+	delay(500);
+}
 
-void send() {
-	if (++msg > 9)
+void Send(unsigned long command)
+{
+	if (command != com)
 	{
-		msg = 0;
+		com = command;
+		for (int i = 0; i < 3; i++)
+		{
+			irsend.sendRC5(command, 12);
+			delay(40);
+		}
 	}
-	radio.write(&msg, sizeof(msg));
-	Serial.println(msg);
+	else
+	{
+		command += 2048;
+		for (int i = 0; i < 3; i++)
+		{
+			irsend.sendRC5(command, 12);
+			delay(40);
+		}
+	}
+	
 }
