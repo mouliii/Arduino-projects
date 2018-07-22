@@ -1,10 +1,12 @@
 
+#include "Button.h"
 unsigned long currentMillis;
 float period = 1000;
 bool gameIsRunning = true;
 bool isPressed = true;
 int led;
 int prevLed;
+bool buttonStates[] = {1,1,1,1};
 
 // the setup function runs once when you press reset or power the board
 void setup() {
@@ -42,6 +44,14 @@ void setup() {
 // the loop function runs over and over again until power down or reset
 void loop() {
 	
+	for (int i = 0; i < 4; i++)
+	{
+		if (digitalRead(i + 2) == HIGH)
+		{
+			buttonStates[i] = true;
+		}
+	}
+
 	if (gameIsRunning)
 	{
 		// timer to light new led
@@ -69,30 +79,29 @@ void loop() {
 		{	// check buttons
 			if (!isPressed)
 			{
-				for (int i = 2; i <= 5; i++)
+
+				// This if statement will only fire on the falling edge of the button input
+				for (int i = 0; i < 4; i++)
 				{
-					if (digitalRead(i) == LOW)
+					if (digitalRead(i + 2) == LOW && buttonStates[i] == true) {
+						// reset the button low flag
+						buttonStates[i] = false;
+
+						isPressed = true;
+						prevLed = led;
+						do
+						{
+							led = random(4) + 6;
+						} while (led == prevLed);
+						period *= 0.95f;
+					}
+					else
 					{
-						if (i + 4 == led)
-						{
-							//digitalWrite(led, LOW);
-							isPressed = true;
-							prevLed = led;
-							do
-							{
-								led = random(4) + 6;
-							} while (led == prevLed);
-							period *= 0.95f;
-						}
-						else
-						{
-							Serial.println(led);
-							Serial.println(i + 4);
-							Serial.println(period);
-							isPressed = false;
-							gameIsRunning = false;
-						}
-						break;
+						Serial.println(led);
+						Serial.println(i + 4);
+						Serial.println(period);
+						isPressed = false;
+						gameIsRunning = false;
 					}
 				}
 			}
