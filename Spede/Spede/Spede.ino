@@ -60,11 +60,8 @@ void loop() {
 			//check if button is pressed
 			if (!isPressed)
 			{
-				//gameIsRunning = false;
-				for (int i = 6; i <= 9; i++)
-				{
-					digitalWrite(i, HIGH);
-				}
+				gameIsRunning = false;
+				
 			}
 			else
 			{	// roll new led
@@ -79,29 +76,35 @@ void loop() {
 		{	// check buttons
 			if (!isPressed)
 			{
-
-				// This if statement will only fire on the falling edge of the button input
 				for (int i = 0; i < 4; i++)
 				{
 					if (digitalRead(i + 2) == LOW && buttonStates[i] == true) {
 						// reset the button low flag
 						buttonStates[i] = false;
 
-						isPressed = true;
-						prevLed = led;
-						do
+						if (i + 6 == led)
 						{
-							led = random(4) + 6;
-						} while (led == prevLed);
-						period *= 0.95f;
-					}
-					else
-					{
-						Serial.println(led);
-						Serial.println(i + 4);
-						Serial.println(period);
-						isPressed = false;
-						gameIsRunning = false;
+							Serial.print(led);
+							Serial.print("     ");
+							Serial.println(i + 4);
+
+							isPressed = true;
+							prevLed = led;
+							do
+							{
+								led = random(4) + 6;
+							} while (led == prevLed);
+							period *= 0.95f;
+						}
+						else
+						{
+							Serial.print(led);
+							Serial.print("     ");
+							Serial.println(i + 4);
+							isPressed = false;
+							gameIsRunning = false;
+						}
+						break;
 					}
 				}
 			}
