@@ -1,55 +1,39 @@
-#include <IRremote.h>
+#include <OneWire.h>
+#include <DallasTemp/DallasTemperature.h>
+#include "virtualwire/VirtualWire.h"
 
-/*
-vaatii testaamista
-*/
+#define ONE_WIRE_BUS 7
 
+OneWire oneWire(ONE_WIRE_BUS);
+DallasTemperature sensors(&oneWire);
 
-#define pon 20L
-#define poff 32L
-#define chd 27L
-#define chu 28L
-#define vold 37L
-#define volu 36L
+float temp = 0;
+float currentTime = 0.0f;
 
-IRsend irsend;
-unsigned long com = 0L;
-void Send(unsigned long command);
+// the setup function runs once when you press reset or power the board
+void setup() {
+	Serial.begin(9600);
+	sensors.begin();
+	sensors.setResolution(12);
 
-void setup()
-{
-	for (int i = 0; i < 3; i++) {
-		irsend.sendRC5(20, 12);
-		delay(40);
-	}
-	delay(10000);
+	vw_set_tx_pin(6);
+	vw_set_ptt_inverted(true); // Required for DR3100
+	vw_setup(2000);	 // Bits per sec
+
+	currentTime = millis();
 }
 
-void loop() 
-{
-	Send(chd);
-	delay(500);
-}
+// the loop function runs over and over again until power down or reset
+void loop() {
 
-void Send(unsigned long command)
-{
-	if (command != com)
+	if (millis() - currentTime > 2500)
 	{
-		com = command;
-		for (int i = 0; i < 3; i++)
-		{
-			irsend.sendRC5(command, 12);
-			delay(40);
-		}
+		sensors.setResolution(12);
+		sensors.setWaitForConversion(true);
+		sensors.requestTemperatures();
+		temp = sensors.getTempCByIndex(0);
+		vw_send((uint8_t*) &temp, sizeof(temp));
+		currentTime = millis();
+		Serial.println(temp);
 	}
-	else
-	{
-		command += 2048;
-		for (int i = 0; i < 3; i++)
-		{
-			irsend.sendRC5(command, 12);
-			delay(40);
-		}
-	}
-	
 }
