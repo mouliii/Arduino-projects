@@ -1,29 +1,49 @@
 #include <Wire.h>
 #include <Servo.h>
 #include <RF24.h>
+#include "Gyro.h"
 
 #define CE_PIN   9
 #define CSN_PIN 10
 
 const byte radioAddress = 76;
 RF24 radio(CE_PIN, CSN_PIN);
-//  KAASU MAX 100 <<-----
-const int maxAngle = 10;
 
+Gyro gyro;
 Servo esc1;
 Servo esc2;
 Servo esc3;
 Servo esc4;
-Servo servo;
-
+// controller inputs
 int inputs[2] = { 0,0 };
-
+// PID //
+const float kp = 0.0f;
+const float ki = 0.0f;
+const float kd = 0.0f;
+const float limit = 0.0f;
+struct PID
+{
+	float p = 0.0f;
+	float i = 0.0f;
+	float d = 0.0f;
+	float pid = 0.0f;
+	float error = 0.0f;
+	float prevError = 0.0f;
+};
+PID pidRoll;
+PID pidPitch;
+//////////
 long loop_timer;
+
+void CalculatePID(PID& pid);
 
 void setup() {
 	Serial.begin(9600);
 	pinMode(7, OUTPUT);
+	// gyro
+	gyro.setup_mpu_6050_registers();
 	// esc
+	/*
 	esc1.attach(2);
 	esc1.write(1000);
 	esc2.attach(3);
@@ -32,9 +52,7 @@ void setup() {
 	esc3.write(1000);
 	esc4.attach(5);
 	esc4.write(1000);
-	servo.attach(6);
-	servo.write(90);
-	
+	*/
 	// radio
 	Serial.println("SimpleRx Starting");
 	radio.begin();
@@ -43,21 +61,27 @@ void setup() {
 	radio.setAutoAck(false);
 	radio.openReadingPipe(1, radioAddress);
 	radio.startListening();
+	// setup gyro
+	gyro.Init();
 	//Reset the loop timer
 	loop_timer = micros();
 }
 
 void loop() {
 
-	GetTransmitterData();
-
-	servo.write(inputs[1]);
-
-	esc1.write(inputs[0]);
-	esc2.write(inputs[0]);
-	esc3.write(inputs[0]);
-	esc4.write(inputs[0]);
-
+	//GetTransmitterData();
+	gyro.read_mpu_6050_data();
+	// pid
+	pidRoll.error = inputs[1] - gyro.anglePitch();
+	pidPitch.error = inputs[2] - gyro.angleRoll();
+	CalculatePID(pidRoll);
+	CalculatePID(pidPitch);
+	
+	esc1.write(inputs[0] - pidRoll.pid - pidPitch.pid);
+	esc2.write(inputs[0] + pidRoll.pid - pidPitch.pid);
+	esc3.write(inputs[0] - pidRoll.pid + pidPitch.pid);
+	esc4.write(inputs[0] + pidRoll.pid + pidPitch.pid);
+	
 	showData(); // <- debug
 	
 	while (micros() - loop_timer < 4000);                                //Wait until the loop_timer reaches 4000us (250Hz) before starting the next loop
@@ -101,7 +125,45 @@ void ListenRadio()
 	inputs[1] = 1 + map(inputs[1], -500, 520, 70, 120);
 }
 
+void CalculatePID(PID& pid)
+{
+	/*
+	pitch - roll
+	float error
+	p = error * kp
+	i += i + ( error * ki )   limit
+	d = ( error - edelError ) * kd
+	prevError = error
+	*/
+
+	pid.p = pid.error * kp;
+	pid.i += pid.i + (pid.error * ki);
+	if (pid.i > limit)
+	{
+		pid.i = limit;
+	}
+	else if (pid.i < -limit)
+	{
+		pid.i = -limit;
+	}
+	pid.d = (pid.error - pid.prevError) * kd;
+	pid.prevError = pid.error;
+
+	pid.pid = pid.p + pid.i + pid.d;
+
+	if (pid.pid > limit)
+	{
+		pid.pid = limit;
+	}
+	else if (pid.pid < -limit)
+	{
+		pid.pid = -limit;
+	}
+}
+
 void showData()
 {
-
+	Serial.print(gyro.anglePitch());
+	Serial.print("       ");
+	Serial.println(gyro.angleRoll());
 }
