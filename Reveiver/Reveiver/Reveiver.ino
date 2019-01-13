@@ -15,12 +15,12 @@ Servo esc2;
 Servo esc3;
 Servo esc4;
 // controller inputs
-int inputs[2] = { 0,0 };
+int inputs[3] = { 1000,0,0 };
 // PID //
-const float kp = 0.0f;
-const float ki = 0.0f;
-const float kd = 0.0f;
-const float limit = 0.0f;
+const float kp = 1.0f;
+const float ki = 0.002f;
+const float kd = 0.15f;
+const float limit = 200.0f;
 struct PID
 {
 	float p = 0.0f;
@@ -39,7 +39,7 @@ void CalculatePID(PID& pid);
 
 void setup() {
 	Serial.begin(9600);
-	pinMode(7, OUTPUT);
+	pinMode(7, OUTPUT);  // LED ON PINNI 7 !!!!!!!!!!!
 	// gyro
 	gyro.setup_mpu_6050_registers();
 	// esc
@@ -77,14 +77,11 @@ void loop() {
 	CalculatePID(pidRoll);
 	CalculatePID(pidPitch);
 	
-	esc1.write(inputs[0] - pidRoll.pid - pidPitch.pid);
-	esc2.write(inputs[0] + pidRoll.pid - pidPitch.pid);
-	esc3.write(inputs[0] - pidRoll.pid + pidPitch.pid);
-	esc4.write(inputs[0] + pidRoll.pid + pidPitch.pid);
+	//WriteToMotors();
 	
 	showData(); // <- debug
 	
-	while (micros() - loop_timer < 4000);                                //Wait until the loop_timer reaches 4000us (250Hz) before starting the next loop
+	while (micros() - loop_timer < 40000);                                //Wait until the loop_timer reaches 4000us (250Hz) before starting the next loop
 	{
 		loop_timer = micros();                                           //Reset the loop timer
 	}
@@ -137,7 +134,7 @@ void CalculatePID(PID& pid)
 	*/
 
 	pid.p = pid.error * kp;
-	pid.i += pid.i + (pid.error * ki);
+	pid.i = pid.i + (pid.error * ki);
 	if (pid.i > limit)
 	{
 		pid.i = limit;
@@ -161,9 +158,33 @@ void CalculatePID(PID& pid)
 	}
 }
 
+void WriteToMotors()
+{
+	esc1.write(inputs[0] - pidRoll.pid - pidPitch.pid);
+	esc2.write(inputs[0] + pidRoll.pid - pidPitch.pid);
+	esc3.write(inputs[0] - pidRoll.pid + pidPitch.pid);
+	esc4.write(inputs[0] + pidRoll.pid + pidPitch.pid);
+
+}
+
 void showData()
 {
+	/*
+	Serial.print(pidPitch.pid);
+	Serial.print("       ");
+	Serial.println(pidRoll.pid);
+	*/
 	Serial.print(gyro.anglePitch());
 	Serial.print("       ");
 	Serial.println(gyro.angleRoll());
+	
+	/*
+	Serial.print(inputs[0] - pidRoll.pid - pidPitch.pid);
+	Serial.print("   ");
+	Serial.print(inputs[0] + pidRoll.pid - pidPitch.pid);
+	Serial.print("   ");
+	Serial.print(inputs[0] - pidRoll.pid + pidPitch.pid);
+	Serial.print("   ");
+	Serial.println(inputs[0] + pidRoll.pid + pidPitch.pid);
+	*/
 }

@@ -18,11 +18,11 @@ class Gyro
 	 void read_mpu_6050_data();
 	 float anglePitch()
 	 {
-		 return angle_pitch - angle_pitch_offset;
+		 return angle_pitch - angle_pitch_offset;  // gyron x akseli
 	 }
 	 float angleRoll()
 	 {
-		 return angle_roll - angle_roll_offset;
+		 return angle_roll - angle_roll_offset;   // gyro y akseli
 	 }
 	 float angleYaw()
 	 {
@@ -33,8 +33,8 @@ private:
 	const float accWight = 1.0f - gyroWeight;
 	float angle_roll_acc = 0;
 	float angle_pitch_acc = 0;
-	const float angle_pitch_offset = -1.4f;
-	const float angle_roll_offset = 7.1f;
+	const float angle_pitch_offset = 0.5f; // gyron x akseli
+	const float angle_roll_offset = 7.5f;  // gyro y akseli
 	int gyro_x, gyro_y, gyro_z;
 	long acc_x, acc_y, acc_z, acc_total_vector;
 	int temperature;

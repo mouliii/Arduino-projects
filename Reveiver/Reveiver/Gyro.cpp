@@ -32,26 +32,26 @@ void Gyro::Init()
 		{  
 			Serial.print(".");												//Print a dot on the LCD every 125 readings
 		}
-		Serial.println();
 		read_mpu_6050_data();                                              //Read the raw acc and gyro data from the MPU-6050
 		gyro_x_cal += gyro_x;                                              //Add the gyro x-axis offset to the gyro_x_cal variable
 		gyro_y_cal += gyro_y;                                              //Add the gyro y-axis offset to the gyro_y_cal variable
 		gyro_z_cal += gyro_z;                                              //Add the gyro z-axis offset to the gyro_z_cal variable
-		//angle_pitch_acc += angle_pitch_acc;        //<----------                         //Accelerometer calibration value for pitch
-		//angle_roll_acc += angle_roll_acc;         //<----------                         //Accelerometer calibration value for roll
-		delay(4);                                                          //Delay 3ms to simulate the 250Hz program loop
+		angle_pitch_acc += angle_pitch_acc;        //<----------                         //Accelerometer calibration value for pitch
+		angle_roll_acc += angle_roll_acc;         //<----------                         //Accelerometer calibration value for roll
+		delay(4);                                                          //Delay 4ms to simulate the 250Hz program loop
 	}
+	Serial.println();
 	digitalWrite(7, LOW);
 	gyro_x_cal /= 2000;                                                  //Divide the gyro_x_cal variable by 2000 to get the avarage offset
 	gyro_y_cal /= 2000;                                                  //Divide the gyro_y_cal variable by 2000 to get the avarage offset
 	gyro_z_cal /= 2000;													//Divide the gyro_z_cal variable by 2000 to get the avarage offset
 
 	//TODO calibrate here
-	//angle_pitch_acc /= 2000;
-	//angle_roll_acc /= 2000;
+	angle_pitch_acc /= 2000;
+	angle_roll_acc /= 2000;
 
-	//angle_pitch_offset = angle_pitch;
-	//angle_roll_offset = angle_roll;
+	angle_pitch_acc -= angle_pitch_offset;
+	angle_roll_acc -= angle_roll_offset;
 
 	angle_pitch = angle_pitch_acc;										//Set the gyro pitch angle equal to the accelerometer pitch angle
 	angle_roll = angle_roll_acc;										//Set the gyro roll angle equal to the accelerometer roll angle
