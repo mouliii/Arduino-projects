@@ -174,11 +174,12 @@ void showData()
 	Serial.print("       ");
 	Serial.println(pidRoll.pid);
 	*/
+	/*
 	Serial.print(gyro.anglePitch());
 	Serial.print("       ");
 	Serial.println(gyro.angleRoll());
+	*/
 	
-	/*
 	Serial.print(inputs[0] - pidRoll.pid - pidPitch.pid);
 	Serial.print("   ");
 	Serial.print(inputs[0] + pidRoll.pid - pidPitch.pid);
@@ -186,5 +187,5 @@ void showData()
 	Serial.print(inputs[0] - pidRoll.pid + pidPitch.pid);
 	Serial.print("   ");
 	Serial.println(inputs[0] + pidRoll.pid + pidPitch.pid);
-	*/
+	
 }
