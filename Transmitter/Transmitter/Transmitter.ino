@@ -12,8 +12,8 @@ RF24 radio(CE_PIN, CSN_PIN); // Create a Radio
 unsigned long currentMillis;
 unsigned long prevMillis;
 unsigned long txIntervalMillis = 4; // send once per 4ms
-
-int inputs[2] = { 0,0 };
+//
+int inputs[5] = { 0,0,0,0,0 };
 
 void setup() {
 
@@ -21,6 +21,7 @@ void setup() {
 
 	pinMode(2, INPUT_PULLUP); // right
 	pinMode(3, INPUT_PULLUP); // left
+
 
 	Serial.println("SimpleTx Starting");
 	radio.begin();
@@ -36,19 +37,37 @@ void setup() {
 void loop() {
 	currentMillis = millis();
 	if (currentMillis - prevMillis >= txIntervalMillis) {
-
-		inputs[0] = analogRead(A0);
-		inputs[1] = analogRead(A2);
 		
-		send();
+		inputs[0] = map(analogRead(A0), 661, 1023, 0, 100); // kaasu
+		inputs[1] = map(analogRead(A1), 1024, 0, -100, 100 + 2); // y
+		inputs[2] = map(analogRead(A2), 1024, 0, -100, 100 + 2); // x
+		// inputs[3] = digitalRead(3); // left shoulder  
+		if (digitalRead(3) == 0)
+		{
+			inputs[3] = 1;
+		}
+		else
+		{
+			inputs[3] = 0;
+		}
+		// inputs[4] = digitalRead(2); // right shoulder  // buttons inverted
+		if (digitalRead(2) == 0)
+		{
+			inputs[4] = 1;
+		}
+		else
+		{
+			inputs[4] = 0;
+		} 
+		// send inputs
+		radio.write(&inputs, sizeof(inputs));
+		// update time
 		prevMillis = millis();
 	}
-}
 
-//====================
+	//Serial.println(map(inputs[0],661,1023,0,100));  // 661 - 1023 -> 0% - 100%
+	//Serial.println(map(inputs[1], 1024, 0, -100, 100) + 2); // y-akseli  1022 - 522 - 0  -> -98% - 102% 
+	//Serial.println(map(inputs[2], 1024, 0, -100, 100) + 2); // x-akseli
+	//Serial.println(digitalRead(2));
 
-void send() {
-	radio.write(&inputs, sizeof(inputs));
-	// Always use sizeof() as it gives the size as the number of bytes.
-	// For example if dataToSend was an int sizeof() would correctly return 2
 }
