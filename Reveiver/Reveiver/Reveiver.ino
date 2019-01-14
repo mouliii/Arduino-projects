@@ -3,6 +3,11 @@
 #include <RF24.h>
 #include "Gyro.h"
 
+/*
+    timer ei radio yhteyttö esim 300 ms
+
+*/
+
 #define CE_PIN   9
 #define CSN_PIN 10
 

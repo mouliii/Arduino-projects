@@ -1,8 +1,6 @@
-#include <OneWire-master/OneWire.h>
+
 #include "SevSeg-master/SevSeg.h"
 #include <VirtualWire.h>
-
-#define RX_PIN 10 //pin where your transmitter is connected
 
 SevSeg sevseg;
 
@@ -13,13 +11,15 @@ uint8_t len = sizeof(temp);
 void setup() {
 	Serial.begin(9600);
 	// Initialise the IO and ISR
-	vw_set_ptt_inverted(true); // Required for DR3100
 	vw_set_rx_pin(10);
+	vw_set_ptt_pin(13);
+	vw_set_ptt_inverted(true); // Required for DR3100
 	vw_setup(2000); // Bits per sec
-	vw_rx_start(); // Start the receiver PLL running
+	vw_rx_start();       // Start the receiver PLL running
+
 	// screen
 	byte numDigits = 4;
-	byte digitPins[] = { A0, A1, A2, A3 };
+	byte digitPins[] = { A3, A2, A1, A0 };
 	byte segmentPins[] = { 2, 3, 4, 5, 6, 7, 8, 9 };
 	sevseg.begin(COMMON_CATHODE, numDigits, digitPins, segmentPins,false,true,true);
 	sevseg.setBrightness(47);
@@ -30,27 +30,28 @@ void setup() {
 // the loop function runs over and over again until power down or reset
 void loop() {
 	
-	if (vw_get_message((uint8_t *)&temp, &len))
+	if (vw_have_message() )
 	{
-		Serial.println(temp);
-		if (temp > 0.0f)
+		if (vw_get_message((uint8_t *)&temp, &len))
 		{
-			sevseg.setNumber(temp, 2);
-		}
-		else if (temp < 0.0f && temp > -10.0f)
-		{
-			//offset leading zeroes ?
-			sevseg.setNumber(temp, 2);
-			sevseg.setChars("-");
-		}
-		else if (temp < -10.0f)
-		{
-			//offset ^ ^ ^ ^ ?
-			sevseg.setNumber(temp, 1);
-			sevseg.setChars("-");
+			if (temp > 0.0f)
+			{
+				Serial.println(temp);
+				sevseg.setNumber(temp, 2);
+			}
+			else if (temp < 0.0f && temp > -10.0f)
+			{
+				//offset leading zeroes ?
+				sevseg.setNumber(temp, 2);
+			}
+			else if (temp < -10.0f)
+			{
+				//offset ^ ^ ^ ^ ?
+				sevseg.setNumber(temp, 1);
+			}
 		}
 	}
-
+	
 	sevseg.refreshDisplay();
 }
 
