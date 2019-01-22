@@ -1,4 +1,4 @@
-
+#include <MPU6050_tockn.h>
 #include "Wire.h"
 #include <Servo.h>
 #include <RF24.h>
@@ -18,7 +18,7 @@ const int ledPin = 7;
 const byte radioAddress = 76;
 RF24 radio(CE_PIN, CSN_PIN);
 
-Gyro gyro;
+MPU6050 mpu6050(Wire);
 Servo esc1;
 Servo esc2;
 Servo esc3;
@@ -56,11 +56,11 @@ long radioSilenceTimer = 0.0f;
 
 void CalculatePID(PID& pid);
 
+int counter = 0;
+
 void setup() {
 	Serial.begin(115200);
 	pinMode(ledPin, OUTPUT);
-	// gyro
-	gyro.setup_mpu_6050_registers();
 	// esc
 	/*
 	esc1.attach(2);
@@ -82,7 +82,9 @@ void setup() {
 	radio.startListening();
 	// setup gyro
 	digitalWrite(ledPin, HIGH);
-	gyro.Init();
+	mpu6050.begin();
+	//mpu6050.calcGyroOffsets(true);
+	mpu6050.setGyroOffsets(4.0f, 47.0f, 0.0f);
 	digitalWrite(ledPin, LOW);
 	//Reset the loop timer
 	loop_timer = micros();
@@ -91,7 +93,7 @@ void setup() {
 void loop() {
 
 	GetTransmitterData();
-	gyro.read_mpu_6050_data();
+	mpu6050.update();
 	// pid
 	/*
 	if (inputs[0] > 1300)
@@ -108,7 +110,7 @@ void loop() {
 	}
 	*/
 	//WriteToMotors();
-	//showData(); // <- debug
+	showData(); // <- debug
 	
 	while (micros() - loop_timer < 4000);  // check 4 ms                              //Wait until the loop_timer reaches 4000us (250Hz) before starting the next loop
 	{
@@ -193,10 +195,17 @@ void showData()
 	Serial.print("       ");
 	Serial.println(pidPitch.pid);
 	*/
+	if (++counter > 10)
+	{
+		Serial.print(mpu6050.getAngleX());
+		Serial.print("       ");
+		Serial.print(mpu6050.getAngleY());
+		Serial.print("       ");
+		Serial.println(mpu6050.getAngleZ());
+
+		counter = 0;
+	}
 	
-	Serial.print(gyro.anglePitch());
-	Serial.print("       ");
-	Serial.println(gyro.angleRoll());
 	
 	/*
 	Serial.print(inputs[0] - pidRoll.pid - pidPitch.pid);
