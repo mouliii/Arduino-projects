@@ -1,16 +1,20 @@
-#include <Wire.h>
+
+#include "Wire.h"
 #include <Servo.h>
 #include <RF24.h>
 #include "Gyro.h"
 
+
 /*
     timer ei radio yhteyttö esim 300 ms
-
+	kaasu 1000 + 100% * 10 ( max 70% ? )
+	turn rate ? max 10 astetta ?
 */
 
 #define CE_PIN   9
 #define CSN_PIN 10
 
+const int ledPin = 7;
 const byte radioAddress = 76;
 RF24 radio(CE_PIN, CSN_PIN);
 
@@ -20,7 +24,7 @@ Servo esc2;
 Servo esc3;
 Servo esc4;
 // controller inputs
-int inputs[3] = { 1000,0,0 };
+int inputs[5] = { 0,0,0,0,0 };
 // PID //
 const float kp = 1.0f;
 const float ki = 0.002f;
@@ -28,6 +32,15 @@ const float kd = 0.15f;
 const float limit = 200.0f;
 struct PID
 {
+	void ResetValues()
+	{
+		p = 0.0f;
+		i = 0.0f;
+		d = 0.0f;
+		pid = 0.0f;
+		error = 0.0f;
+		prevError = 0.0f;
+	}
 	float p = 0.0f;
 	float i = 0.0f;
 	float d = 0.0f;
@@ -39,24 +52,25 @@ PID pidRoll;
 PID pidPitch;
 //////////
 long loop_timer;
+long radioSilenceTimer = 0.0f;
 
 void CalculatePID(PID& pid);
 
 void setup() {
-	Serial.begin(9600);
-	pinMode(7, OUTPUT);  // LED ON PINNI 7 !!!!!!!!!!!
+	Serial.begin(115200);
+	pinMode(ledPin, OUTPUT);
 	// gyro
 	gyro.setup_mpu_6050_registers();
 	// esc
 	/*
 	esc1.attach(2);
-	esc1.write(1000);
+	esc1.writeMicroseconds(1000);
 	esc2.attach(3);
-	esc2.write(1000);
+	esc2.writeMicroseconds(1000);
 	esc3.attach(4);
-	esc3.write(1000);
+	esc3.writeMicroseconds(1000);
 	esc4.attach(5);
-	esc4.write(1000);
+	esc4.writeMicroseconds(1000);
 	*/
 	// radio
 	Serial.println("SimpleRx Starting");
@@ -67,26 +81,36 @@ void setup() {
 	radio.openReadingPipe(1, radioAddress);
 	radio.startListening();
 	// setup gyro
+	digitalWrite(ledPin, HIGH);
 	gyro.Init();
+	digitalWrite(ledPin, LOW);
 	//Reset the loop timer
 	loop_timer = micros();
 }
 
 void loop() {
 
-	//GetTransmitterData();
+	GetTransmitterData();
 	gyro.read_mpu_6050_data();
 	// pid
-	pidRoll.error = inputs[1] - gyro.anglePitch();
-	pidPitch.error = inputs[2] - gyro.angleRoll();
-	CalculatePID(pidRoll);
-	CalculatePID(pidPitch);
-	
+	/*
+	if (inputs[0] > 1300)
+	{
+		pidRoll.error = inputs[1] - gyro.anglePitch();
+		pidPitch.error = inputs[2] - gyro.angleRoll();
+		CalculatePID(pidRoll);
+		CalculatePID(pidPitch);
+	}
+	else
+	{
+		pidRoll.ResetValues();
+		pidPitch.ResetValues();
+	}
+	*/
 	//WriteToMotors();
+	//showData(); // <- debug
 	
-	showData(); // <- debug
-	
-	while (micros() - loop_timer < 40000);                                //Wait until the loop_timer reaches 4000us (250Hz) before starting the next loop
+	while (micros() - loop_timer < 4000);  // check 4 ms                              //Wait until the loop_timer reaches 4000us (250Hz) before starting the next loop
 	{
 		loop_timer = micros();                                           //Reset the loop timer
 	}
@@ -97,34 +121,25 @@ void GetTransmitterData() {
 	
 	if (radio.available() )
 	{
-		ListenRadio();
+		radio.read(&inputs, sizeof(inputs));
+		inputs[0] = inputs[0] * 10 + 1000;
+		inputs[1] /= 10;
+		inputs[2] /= 10;
+		radioSilenceTimer = 0.0f;
 	}
+	/*
 	else
 	{	
-		while (!radio.available() )
+		radioSilenceTimer += millis();
+		if (radioSilenceTimer > 300)  // 300 ms korjaa
 		{
-			if (micros() - loop_timer > 500000)
-			{
-				esc1.write(1000);
-				esc2.write(1000);
-				esc3.write(1000);
-				esc4.write(1000);
-			}
+			esc1.write(1000);
+			esc2.write(1000);
+			esc3.write(1000);
+			esc4.write(1000);
 		}
-		ListenRadio();
-		loop_timer = micros();
 	}
-	
-}
-
-void ListenRadio()
-{
-	radio.read(&inputs, sizeof(inputs));
-	// joystick raw input zeroed //
-	inputs[1] -= 532; //522
-	// mapping
-	inputs[0] = 1000 + map(inputs[0], 662, 1023, 0, 100);
-	inputs[1] = 1 + map(inputs[1], -500, 520, 70, 120);
+	*/	
 }
 
 void CalculatePID(PID& pid)
@@ -165,26 +180,25 @@ void CalculatePID(PID& pid)
 
 void WriteToMotors()
 {
-	esc1.write(inputs[0] - pidRoll.pid - pidPitch.pid);
-	esc2.write(inputs[0] + pidRoll.pid - pidPitch.pid);
-	esc3.write(inputs[0] - pidRoll.pid + pidPitch.pid);
-	esc4.write(inputs[0] + pidRoll.pid + pidPitch.pid);
-
+	esc1.writeMicroseconds(inputs[0] - pidRoll.pid - pidPitch.pid);
+	esc2.writeMicroseconds(inputs[0] + pidRoll.pid - pidPitch.pid);
+	esc3.writeMicroseconds(inputs[0] - pidRoll.pid + pidPitch.pid);
+	esc4.writeMicroseconds(inputs[0] + pidRoll.pid + pidPitch.pid);
 }
 
 void showData()
 {
 	/*
-	Serial.print(pidPitch.pid);
+	Serial.print(pidRoll.pid);
 	Serial.print("       ");
-	Serial.println(pidRoll.pid);
+	Serial.println(pidPitch.pid);
 	*/
-	/*
+	
 	Serial.print(gyro.anglePitch());
 	Serial.print("       ");
 	Serial.println(gyro.angleRoll());
-	*/
 	
+	/*
 	Serial.print(inputs[0] - pidRoll.pid - pidPitch.pid);
 	Serial.print("   ");
 	Serial.print(inputs[0] + pidRoll.pid - pidPitch.pid);
@@ -192,5 +206,7 @@ void showData()
 	Serial.print(inputs[0] - pidRoll.pid + pidPitch.pid);
 	Serial.print("   ");
 	Serial.println(inputs[0] + pidRoll.pid + pidPitch.pid);
-	
+	*/
+
+	//Serial.println(inputs[2]);
 }

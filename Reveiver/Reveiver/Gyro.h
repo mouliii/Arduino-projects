@@ -1,5 +1,7 @@
 // Gyro.h
 
+extern const int ledPin;
+
 #ifndef _GYRO_h
 #define _GYRO_h
 
@@ -29,12 +31,12 @@ class Gyro
 		 return angle_z;
 	 }
 private:
-	const float gyroWeight = 0.7f;
+	const float gyroWeight = 0.9f;      // default 0.7
 	const float accWight = 1.0f - gyroWeight;
 	float angle_roll_acc = 0;
 	float angle_pitch_acc = 0;
-	const float angle_pitch_offset = 0.5f; // gyron x akseli
-	const float angle_roll_offset = 7.5f;  // gyro y akseli
+	const float angle_pitch_offset = 0.74f; // gyron x akseli
+	const float angle_roll_offset = 7.7f;  // gyro y akseli
 	int gyro_x, gyro_y, gyro_z;
 	long acc_x, acc_y, acc_z, acc_total_vector;
 	int temperature;
