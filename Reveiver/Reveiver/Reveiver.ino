@@ -62,7 +62,7 @@ void setup() {
 	Serial.begin(115200);
 	pinMode(ledPin, OUTPUT);
 	// esc
-	/*
+	
 	esc1.attach(2);
 	esc1.writeMicroseconds(1000);
 	esc2.attach(3);
@@ -71,7 +71,7 @@ void setup() {
 	esc3.writeMicroseconds(1000);
 	esc4.attach(5);
 	esc4.writeMicroseconds(1000);
-	*/
+	
 	// radio
 	Serial.println("SimpleRx Starting");
 	radio.begin();
@@ -95,11 +95,10 @@ void loop() {
 	GetTransmitterData();
 	mpu6050.update();
 	// pid
-	/*
 	if (inputs[0] > 1300)
 	{
-		pidRoll.error = inputs[1] - gyro.anglePitch();
-		pidPitch.error = inputs[2] - gyro.angleRoll();
+		pidRoll.error = inputs[1] - mpu6050.getAngleY();
+		pidPitch.error = inputs[2] - mpu6050.getAngleX();
 		CalculatePID(pidRoll);
 		CalculatePID(pidPitch);
 	}
@@ -108,16 +107,15 @@ void loop() {
 		pidRoll.ResetValues();
 		pidPitch.ResetValues();
 	}
-	*/
-	//WriteToMotors();
-	showData(); // <- debug
 	
-	while (micros() - loop_timer < 4000);  // check 4 ms                              //Wait until the loop_timer reaches 4000us (250Hz) before starting the next loop
+	WriteToMotors();
+	//showData(); // <- debug
+	
+	while (micros() - loop_timer < 4000);  // check 4 ms                 //Wait until the loop_timer reaches 4000us (250Hz) before starting the next loop
 	{
 		loop_timer = micros();                                           //Reset the loop timer
 	}
-}
-	
+}	
 
 void GetTransmitterData() {
 	
