@@ -97,8 +97,8 @@ void loop() {
 	// pid
 	if (inputs[0] > 1300)
 	{
-		pidRoll.error = inputs[1] - mpu6050.getAngleY();
-		pidPitch.error = inputs[2] - mpu6050.getAngleX();
+		pidRoll.error = inputs[2] - mpu6050.getAngleX();
+		pidPitch.error = inputs[1] - mpu6050.getAngleY();
 		CalculatePID(pidRoll);
 		CalculatePID(pidPitch);
 	}
@@ -109,7 +109,7 @@ void loop() {
 	}
 	
 	WriteToMotors();
-	//showData(); // <- debug
+	showData(); // <- debug
 	
 	while (micros() - loop_timer < 4000);  // check 4 ms                 //Wait until the loop_timer reaches 4000us (250Hz) before starting the next loop
 	{
@@ -124,7 +124,7 @@ void GetTransmitterData() {
 		radio.read(&inputs, sizeof(inputs));
 		inputs[0] = inputs[0] * 10 + 1000;
 		inputs[1] /= 10;
-		inputs[2] /= 10;
+		inputs[2] /= 10 * -1;
 		radioSilenceTimer = 0.0f;
 	}
 	/*
@@ -180,10 +180,10 @@ void CalculatePID(PID& pid)
 
 void WriteToMotors()
 {
-	esc1.writeMicroseconds(inputs[0] - pidRoll.pid - pidPitch.pid);
-	esc2.writeMicroseconds(inputs[0] + pidRoll.pid - pidPitch.pid);
-	esc3.writeMicroseconds(inputs[0] - pidRoll.pid + pidPitch.pid);
-	esc4.writeMicroseconds(inputs[0] + pidRoll.pid + pidPitch.pid);
+	esc1.writeMicroseconds(inputs[0] + pidRoll.pid - pidPitch.pid);
+	esc2.writeMicroseconds(inputs[0] - pidRoll.pid - pidPitch.pid);
+	esc3.writeMicroseconds(inputs[0] + pidRoll.pid + pidPitch.pid);
+	esc4.writeMicroseconds(inputs[0] - pidRoll.pid + pidPitch.pid);
 }
 
 void showData()
@@ -192,14 +192,22 @@ void showData()
 	Serial.print(pidRoll.pid);
 	Serial.print("       ");
 	Serial.println(pidPitch.pid);
-	*/
-	if (++counter > 10)
-	{
-		Serial.print(mpu6050.getAngleX());
+
+	Serial.print(mpu6050.getAngleX());
 		Serial.print("       ");
 		Serial.print(mpu6050.getAngleY());
 		Serial.print("       ");
 		Serial.println(mpu6050.getAngleZ());
+	*/
+	if (++counter > 10)
+	{
+		Serial.print(inputs[0] - pidRoll.pid - pidPitch.pid);
+		Serial.print("   ");
+		Serial.print(inputs[0] + pidRoll.pid - pidPitch.pid);
+		Serial.print("   ");
+		Serial.print(inputs[0] - pidRoll.pid + pidPitch.pid);
+		Serial.print("   ");
+		Serial.println(inputs[0] + pidRoll.pid + pidPitch.pid);
 
 		counter = 0;
 	}
