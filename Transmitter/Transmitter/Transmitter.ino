@@ -34,36 +34,31 @@ void setup() {
 
 //====================
 
-void loop() {
-	currentMillis = millis();
-	if (currentMillis - prevMillis >= txIntervalMillis) {
-		
-		inputs[0] = map(analogRead(A0), 661, 1023, 0, 100); // kaasu
-		inputs[1] = map(analogRead(A1), 1024, 0, -100, 100 + 2); // y
-		inputs[2] = map(analogRead(A2), 1024, 0, -100, 100 + 2); // x
-		// inputs[3] = digitalRead(3); // left shoulder  
-		if (digitalRead(3) == 0)
-		{
-			inputs[3] = 1;
-		}
-		else
-		{
-			inputs[3] = 0;
-		}
-		// inputs[4] = digitalRead(2); // right shoulder  // buttons inverted
-		if (digitalRead(2) == 0)
-		{
-			inputs[4] = 1;
-		}
-		else
-		{
-			inputs[4] = 0;
-		} 
-		// send inputs
-		radio.write(&inputs, sizeof(inputs));
-		// update time
-		prevMillis = millis();
+void loop()
+{
+	inputs[0] = map(analogRead(A0), 661, 1023, 0, 100); // kaasu
+	inputs[1] = map(analogRead(A1), 1024, 0, -100, 100 + 2); // y
+	inputs[2] = map(analogRead(A2), 1024, 0, -100, 100 + 2); // x
+	// inputs[3] = digitalRead(3); // left shoulder  
+	if (digitalRead(3) == 0)
+	{
+		inputs[3] = 1;
 	}
+	else
+	{
+		inputs[3] = 0;
+	}
+	// inputs[4] = digitalRead(2); // right shoulder  // buttons inverted
+	if (digitalRead(2) == 0)
+	{
+		inputs[4] = 1;
+	}
+	else
+	{
+		inputs[4] = 0;
+	}
+	// send inputs
+	radio.write(&inputs, sizeof(inputs));
 
 	//Serial.println(map(inputs[0],661,1023,0,100));  // 661 - 1023 -> 0% - 100%
 	//Serial.println(map(inputs[1], 1024, 0, -100, 100) + 2); // y-akseli  1022 - 522 - 0  -> -98% - 102% 

@@ -6,7 +6,7 @@
 
 
 /*
-    timer ei radio yhteyttö esim 300 ms
+    timer ei radio yhteyttö esim 300 ms  <----- miten aktivointi
 	kaasu 1000 + 100% * 10 ( max 70% ? )
 	turn rate ? max 10 astetta ?
 */
@@ -73,7 +73,7 @@ void setup() {
 	esc4.writeMicroseconds(1000);
 	
 	// radio
-	Serial.println("SimpleRx Starting");
+	Serial.println("Receiver starting");
 	radio.begin();
 	radio.setDataRate(RF24_250KBPS);
 	//radio.setPALevel(RF24_PA_MIN);
@@ -109,7 +109,7 @@ void loop() {
 	}
 	
 	WriteToMotors();
-	showData(); // <- debug
+	//showData(); // <- debug
 	
 	while (micros() - loop_timer < 4000);  // check 4 ms                 //Wait until the loop_timer reaches 4000us (250Hz) before starting the next loop
 	{
@@ -127,19 +127,28 @@ void GetTransmitterData() {
 		inputs[2] /= 10 * -1;
 		radioSilenceTimer = 0.0f;
 	}
-	/*
 	else
-	{	
+	{
 		radioSilenceTimer += millis();
-		if (radioSilenceTimer > 300)  // 300 ms korjaa
+		
+		if (radioSilenceTimer - millis() > 300)  // 300 ms
 		{
-			esc1.write(1000);
-			esc2.write(1000);
-			esc3.write(1000);
-			esc4.write(1000);
+			while (!radio.available() )
+			{
+				esc1.write(1000);
+				esc2.write(1000);
+				esc3.write(1000);
+				esc4.write(1000);
+			}
+
+			radio.read(&inputs, sizeof(inputs));
+			inputs[0] = inputs[0] * 10 + 1000;
+			inputs[1] /= 10;
+			inputs[2] /= 10 * -1;
+			radioSilenceTimer = 0.0f;
 		}
+		
 	}
-	*/	
 }
 
 void CalculatePID(PID& pid)
@@ -180,10 +189,28 @@ void CalculatePID(PID& pid)
 
 void WriteToMotors()
 {
-	esc1.writeMicroseconds(inputs[0] + pidRoll.pid - pidPitch.pid);
-	esc2.writeMicroseconds(inputs[0] - pidRoll.pid - pidPitch.pid);
-	esc3.writeMicroseconds(inputs[0] + pidRoll.pid + pidPitch.pid);
-	esc4.writeMicroseconds(inputs[0] - pidRoll.pid + pidPitch.pid);
+	int motorSpeed[4] = {
+		inputs[0] + pidRoll.pid - pidPitch.pid,
+		inputs[0] - pidRoll.pid - pidPitch.pid,
+		inputs[0] + pidRoll.pid + pidPitch.pid,
+		inputs[0] - pidRoll.pid + pidPitch.pid
+	};
+	for (int i = 0; i < 4; i++)
+	{
+		if (motorSpeed[i] < 1000)
+		{
+			motorSpeed[i] = 1000;
+		}
+		else if (motorSpeed[i] > 1900)
+		{
+			motorSpeed[i] = 1900;
+		}
+	}
+
+	esc1.writeMicroseconds(motorSpeed[0]);
+	esc2.writeMicroseconds(motorSpeed[1]);
+	esc3.writeMicroseconds(motorSpeed[2]);
+	esc4.writeMicroseconds(motorSpeed[3]);
 }
 
 void showData()
