@@ -37,7 +37,7 @@ void setup() {
 void loop()
 {
 	inputs[0] = map(analogRead(A0), 661, 1023, 0, 100); // kaasu
-	inputs[1] = map(analogRead(A1), 1024, 0, -100, 100 + 2); // y
+	inputs[1] = map(analogRead(A1), 1022, 30, -100, 100); // y
 	inputs[2] = map(analogRead(A2), 1024, 0, -100, 100 + 2); // x
 	// inputs[3] = digitalRead(3); // left shoulder  
 	if (digitalRead(3) == 0)
@@ -60,9 +60,9 @@ void loop()
 	// send inputs
 	radio.write(&inputs, sizeof(inputs));
 
-	//Serial.println(map(inputs[0],661,1023,0,100));  // 661 - 1023 -> 0% - 100%
+	Serial.println(inputs[0]);  // 661 - 1023 -> 0% - 100%
 	//Serial.println(map(inputs[1], 1024, 0, -100, 100) + 2); // y-akseli  1022 - 522 - 0  -> -98% - 102% 
-	//Serial.println(map(inputs[2], 1024, 0, -100, 100) + 2); // x-akseli
+	//Serial.println(analogRead(A1)); // x-akseli
 	//Serial.println(digitalRead(2));
 
 }
