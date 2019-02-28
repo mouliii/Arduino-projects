@@ -1,5 +1,4 @@
-#include <MPU6050_tockn.h>
-#include "Wire.h"
+#include "mpufixed.h"
 #include <Servo.h>
 #include <RF24.h>
 #include "Gyro.h"
@@ -19,7 +18,7 @@ Servo esc2;
 Servo esc3;
 Servo esc4;
 // controller inputs
-int inputs[5] = { 1000,0,0,0,0 };
+int inputs[5] = { 1450,0,0,0,0 };
 // PID //
 const float kp = 10.0f;
 const float ki = 0.0f;
@@ -53,18 +52,19 @@ bool radioContact = true;
 void CalculatePID(PID& pid);
 
 int counter = 0;
+float var = 0.0f;
 
 void setup() {
 	Serial.begin(115200);
 	pinMode(ledPin, OUTPUT);
 	// esc
-	esc1.attach(2);
+	esc1.attach(3);
 	esc1.writeMicroseconds(minThrottle);
-	esc2.attach(3);
+	esc2.attach(4);
 	esc2.writeMicroseconds(minThrottle);
-	esc3.attach(4);
+	esc3.attach(5);
 	esc3.writeMicroseconds(minThrottle);
-	esc4.attach(5);
+	esc4.attach(6);
 	esc4.writeMicroseconds(minThrottle);
 	
 	// radio
@@ -76,15 +76,15 @@ void setup() {
 	radio.startListening();
 	// setup gyro
 	mpu6050.begin();
-	//mpu6050.calcGyroOffsets(true);
-	mpu6050.setGyroOffsets(1.0f, -15.2f, 0.0f);
+	mpu6050.calcGyroOffsets(true);
+	//mpu6050.setGyroOffsets(0.0f, 0.0f, 0.0f);
 	//Reset the loop timer
 	loop_timer = micros();
 }
 
 void loop()
 {
-	GetTransmitterData();
+	//GetTransmitterData();
 	mpu6050.update();
 	// pid
 	if (inputs[0] > 1400)
@@ -101,7 +101,12 @@ void loop()
 	}
 	
 	WriteToMotors();
-	//showData(); // <- debug
+	showData(); // <- debug
+
+	if (micros() - loop_timer > var)
+	{
+		var = micros() - loop_timer;
+	}
 
 	while (micros() - loop_timer < 4000);  // check 4 ms                 //Wait until the loop_timer reaches 4000us (250Hz) before starting the next loop
 	{
@@ -216,9 +221,9 @@ void showData()
 		Serial.print("       ");
 		Serial.println(mpu6050.getAngleZ());
 	*/
-	if (counter > 10)
+	if (++counter > 10)
 	{
-
+		Serial.println(var / 1000);
 
 		counter = 0;
 	}

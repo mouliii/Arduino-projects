@@ -24,9 +24,15 @@
     <ClInclude Include="Gyro.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="mpufixed.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Gyro.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="mpufixed.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
