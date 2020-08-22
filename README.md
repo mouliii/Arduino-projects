@@ -1,2 +1,2 @@
-# ArduinoQuad and projects
+# Arduino projects
 
